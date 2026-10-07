@@ -2,11 +2,15 @@ from http import HTTPStatus
 
 from fastapi import FastAPI
 
-from src.multi_agent_chat.schemas import Message
+from multi_agent_chat.schemas import UserCreate, UserRead
 
 app = FastAPI()
 
 
-@app.get('/', status_code=HTTPStatus.OK, response_model=Message)
-def read_root():
-    return Message(message='Hello, world!')
+@app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserRead)
+def create_user(user: UserCreate):
+    return UserRead(
+        id=1,
+        username=user.username,
+        email=user.email,
+    )
