@@ -74,3 +74,9 @@ def test_replace_user(client):
         'username': 'test2',
         'email': 'test2@example.com',
     }
+
+
+def test_delete_user(client):
+    response = client.delete('/users/1')
+
+    assert response.status_code == HTTPStatus.NO_CONTENT

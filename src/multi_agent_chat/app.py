@@ -15,6 +15,8 @@ app = FastAPI()
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserRead)
 def create_user(user: UserCreate):
+    # username único
+    # email único
     return UserRead(
         id=1,
         **user.model_dump(),
@@ -44,6 +46,7 @@ def read_users():
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserRead
 )
 def read_user(user_id: int):
+    # existir no db
     existing_user = {
         'id': user_id,
         'username': 'test',
@@ -59,6 +62,9 @@ def read_user(user_id: int):
     response_model=UserRead,
 )
 def update_user(user_id: int, user: UserUpdate):
+    # existir no db
+    # username único
+    # email único
     existing_user = {
         'id': user_id,
         'username': 'test',
@@ -74,4 +80,13 @@ def update_user(user_id: int, user: UserUpdate):
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserRead
 )
 def replace_user(user_id: int, user: UserReplace):
+    # existir no db
+    # username único
+    # email único
     return UserRead(id=user_id, **user.model_dump())
+
+
+@app.delete('/users/{user_id}', status_code=HTTPStatus.NO_CONTENT)
+def delete_user(user_id: int):
+    # existir no db
+    pass
