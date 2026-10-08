@@ -14,3 +14,19 @@ def create_user(user: UserCreate):
         username=user.username,
         email=user.email,
     )
+
+
+@app.get('/users/', status_code=HTTPStatus.OK, response_model=list[UserRead])
+def read_users():
+    return [
+        UserRead(
+            id=1,
+            username='test',
+            email='test@example.com',
+        ),
+        UserRead(
+            id=2,
+            username='test2',
+            email='test2@example.com',
+        ),
+    ]
