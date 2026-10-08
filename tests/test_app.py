@@ -29,3 +29,37 @@ def test_read_users(client):
             {'id': 2, 'username': 'test2', 'email': 'test2@example.com'},
         ]
     }
+
+
+def test_update_user(client):
+    response = client.patch(
+        '/users/',
+        json={
+            'username': 'test2',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'id': 1,
+        'username': 'test2',
+        'email': 'test@example.com',
+    }
+
+
+def test_replace_user(client):
+    response = client.put(
+        '/users/',
+        json={
+            'username': 'test2',
+            'email': 'test2@example.com',
+            'password': 'test2123',
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'id': 1,
+        'username': 'test2',
+        'email': 'test2@example.com',
+    }

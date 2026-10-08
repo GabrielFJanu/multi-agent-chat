@@ -15,3 +15,13 @@ class UserRead(BaseModel):
 
 class UserList(BaseModel):
     users: list[UserRead]
+
+
+class UserUpdate(BaseModel):
+    username: str | None = None
+    email: EmailStr | None = None
+    password: str | None = None
+
+
+class UserReplace(UserCreate):
+    pass
