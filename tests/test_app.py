@@ -33,7 +33,7 @@ def test_read_users(client):
 
 def test_update_user(client):
     response = client.patch(
-        '/users/',
+        '/users/1',
         json={
             'username': 'test2',
         },
@@ -49,7 +49,7 @@ def test_update_user(client):
 
 def test_replace_user(client):
     response = client.put(
-        '/users/',
+        '/users/1',
         json={
             'username': 'test2',
             'email': 'test2@example.com',

@@ -38,24 +38,25 @@ def read_users():
     return UserList(users=existing_users)
 
 
-@app.patch('/users/', status_code=HTTPStatus.OK, response_model=UserRead)
-def update_user(user: UserUpdate):
+@app.patch(
+    '/users/{user_id}',
+    status_code=HTTPStatus.OK,
+    response_model=UserRead,
+)
+def update_user(user_id: int, user: UserUpdate):
     existing_user = {
-        'id': 1,
+        'id': user_id,
         'username': 'test',
         'email': 'test@example.com',
         'password': 'test123',
     }
-    existing_user.update(**user.model_dump(exclude_unset=True))
+    changes = user.model_dump()
+    existing_user.update(changes)
     return UserRead(**existing_user)
 
 
-@app.put('/users/', status_code=HTTPStatus.OK, response_model=UserRead)
-def replace_user(user: UserReplace):
-    existing_user = {
-        'id': 1,
-        'username': 'test',
-        'email': 'test@example.com',
-        'password': 'test123',
-    }
-    return UserRead(id=existing_user['id'], **user.model_dump())
+@app.put(
+    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserRead
+)
+def replace_user(user_id: int, user: UserReplace):
+    return UserRead(id=user_id, **user.model_dump())
