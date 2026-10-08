@@ -24,16 +24,18 @@ def create_user(user: UserCreate):
 @app.get('/users/', status_code=HTTPStatus.OK, response_model=UserList)
 def read_users():
     existing_users = [
-        UserRead(
-            id=1,
-            username='test',
-            email='test@example.com',
-        ),
-        UserRead(
-            id=2,
-            username='test2',
-            email='test2@example.com',
-        ),
+        {
+            'id': 1,
+            'username': 'test',
+            'email': 'test@example.com',
+            'password': 'test123',
+        },
+        {
+            'id': 2,
+            'username': 'test2',
+            'email': 'test2@example.com',
+            'password': 'test2123',
+        },
     ]
     return UserList(users=existing_users)
 
