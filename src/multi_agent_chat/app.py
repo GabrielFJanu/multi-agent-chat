@@ -38,6 +38,19 @@ def read_users():
     return UserList(users=existing_users)
 
 
+@app.get(
+    '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserRead
+)
+def read_user(user_id: int):
+    existing_user = {
+        'id': user_id,
+        'username': 'test',
+        'email': 'test@example.com',
+        'password': 'test123',
+    }
+    return UserRead(**existing_user)
+
+
 @app.patch(
     '/users/{user_id}',
     status_code=HTTPStatus.OK,
