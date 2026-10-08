@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from fastapi import FastAPI
 
-from multi_agent_chat.schemas import UserCreate, UserRead
+from multi_agent_chat.schemas import UserCreate, UserList, UserRead
 
 app = FastAPI()
 
@@ -16,17 +16,19 @@ def create_user(user: UserCreate):
     )
 
 
-@app.get('/users/', status_code=HTTPStatus.OK, response_model=list[UserRead])
+@app.get('/users/', status_code=HTTPStatus.OK, response_model=UserList)
 def read_users():
-    return [
-        UserRead(
-            id=1,
-            username='test',
-            email='test@example.com',
-        ),
-        UserRead(
-            id=2,
-            username='test2',
-            email='test2@example.com',
-        ),
-    ]
+    return UserList(
+        users=[
+            UserRead(
+                id=1,
+                username='test',
+                email='test@example.com',
+            ),
+            UserRead(
+                id=2,
+                username='test2',
+                email='test2@example.com',
+            ),
+        ]
+    )
