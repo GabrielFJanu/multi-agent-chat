@@ -2,7 +2,7 @@ from dataclasses import asdict
 
 from sqlalchemy import select
 
-from src.multi_agent_chat.models import User
+from multi_agent_chat.models import User
 
 
 def test_create_user(session, mock_db_time):

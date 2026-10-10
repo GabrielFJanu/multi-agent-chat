@@ -6,8 +6,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 
-from src.multi_agent_chat.app import app
-from src.multi_agent_chat.models import table_registry
+from multi_agent_chat.app import app
+from multi_agent_chat.models import table_registry
 
 
 @pytest.fixture
