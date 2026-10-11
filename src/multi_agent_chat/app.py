@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from multi_agent_chat.database import get_session
@@ -19,31 +20,22 @@ app = FastAPI()
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserRead)
 def create_user(user: UserCreate, session: Session = Depends(get_session)):
-    conflict_user = session.scalar(
-        select(User).where(User.username == user.username)
-    )
-    if conflict_user:
-        raise HTTPException(
-            status_code=HTTPStatus.CONFLICT,
-            detail='Username already exists',
-        )
-
-    conflict_user = session.scalar(
-        select(User).where(User.email == user.email)
-    )
-    if conflict_user:
-        raise HTTPException(
-            status_code=HTTPStatus.CONFLICT,
-            detail='Email already exists',
-        )
-
     db_user = User(
         username=user.username,
         email=user.email,
         password=user.password,
     )
     session.add(db_user)
-    session.commit()
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail='Username or Email already exists',
+        )
+
     session.refresh(db_user)
 
     return db_user
@@ -89,36 +81,21 @@ def update_user(
         )
 
     if user.username:
-        conflict_user = session.scalar(
-            select(User).where(
-                (User.id != user_id) & (User.username == user.username)
-            )
-        )
-        if conflict_user:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT,
-                detail='Username already exists',
-            )
-
-    if user.email:
-        conflict_user = session.scalar(
-            select(User).where(
-                (User.id != user_id) & (User.email == user.email)
-            )
-        )
-        if conflict_user:
-            raise HTTPException(
-                status_code=HTTPStatus.CONFLICT,
-                detail='Email already exists',
-            )
-
-    if user.username:
         db_user.username = user.username
     if user.email:
         db_user.email = user.email
     if user.password:
         db_user.password = user.password
-    session.commit()
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail='Username or Email already exists',
+        )
+
     session.refresh(db_user)
 
     return db_user
@@ -137,30 +114,19 @@ def replace_user(
             status_code=HTTPStatus.NOT_FOUND, detail='User not found'
         )
 
-    conflict_user = session.scalar(
-        select(User).where(
-            (User.id != user_id) & (User.username == user.username)
-        )
-    )
-    if conflict_user:
-        raise HTTPException(
-            status_code=HTTPStatus.CONFLICT,
-            detail='Username already exists',
-        )
-
-    conflict_user = session.scalar(
-        select(User).where((User.id != user_id) & (User.email == user.email))
-    )
-    if conflict_user:
-        raise HTTPException(
-            status_code=HTTPStatus.CONFLICT,
-            detail='Email already exists',
-        )
-
     db_user.username = user.username
     db_user.email = user.email
     db_user.password = user.password
-    session.commit()
+
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail='Username or Email already exists',
+        )
+
     session.refresh(db_user)
 
     return db_user
