@@ -19,30 +19,29 @@ def test_create_user(client):
     }
 
 
-def test_read_users(client):
+def test_read_users(client, user):
     response = client.get('/users/')
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'users': [
-            {'id': 1, 'username': 'test', 'email': 'test@example.com'},
-            {'id': 2, 'username': 'test2', 'email': 'test2@example.com'},
+            {'id': user.id, 'username': user.username, 'email': user.email}
         ]
     }
 
 
-def test_read_user(client):
+def test_read_user(client, user):
     response = client.get('/users/1')
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'id': 1,
-        'username': 'test',
-        'email': 'test@example.com',
+        'id': user.id,
+        'username': user.username,
+        'email': user.email,
     }
 
 
-def test_update_user(client):
+def test_update_user(client, user):
     response = client.patch(
         '/users/1',
         json={
@@ -52,13 +51,13 @@ def test_update_user(client):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'id': 1,
+        'id': user.id,
         'username': 'test2',
-        'email': 'test@example.com',
+        'email': user.email,
     }
 
 
-def test_replace_user(client):
+def test_replace_user(client, user):
     response = client.put(
         '/users/1',
         json={
@@ -76,7 +75,7 @@ def test_replace_user(client):
     }
 
 
-def test_delete_user(client):
+def test_delete_user(client, user):
     response = client.delete('/users/1')
 
     assert response.status_code == HTTPStatus.NO_CONTENT

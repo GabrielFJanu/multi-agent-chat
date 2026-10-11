@@ -1,5 +1,4 @@
 from pydantic import BaseModel, EmailStr
-from pydantic.experimental.missing_sentinel import MISSING
 
 
 class UserCreate(BaseModel):
@@ -19,9 +18,9 @@ class UserList(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    username: str | MISSING = MISSING
-    email: EmailStr | MISSING = MISSING
-    password: str | MISSING = MISSING
+    username: str | None = None
+    email: EmailStr | None = None
+    password: str | None = None
 
 
 class UserReplace(UserCreate):
