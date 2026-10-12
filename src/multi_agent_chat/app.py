@@ -18,6 +18,7 @@ from multi_agent_chat.schemas import (
 )
 from multi_agent_chat.security import (
     create_access_token,
+    get_current_user,
     get_password_hash,
     verify_password,
 )
@@ -105,22 +106,24 @@ def read_user(user_id: int, session: Session = Depends(get_session)):
     response_model=UserRead,
 )
 def update_user(
-    user_id: int, user: UserUpdate, session: Session = Depends(get_session)
+    user_id: int,
+    user: UserUpdate,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    db_user = session.get(User, user_id)
-
-    if not db_user:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
         )
 
     if user.username:
-        db_user.username = user.username
+        current_user.username = user.username
     if user.email:
-        db_user.email = user.email
+        current_user.email = user.email
     if user.password:
         hashed_password = get_password_hash(user.password)
-        db_user.password = hashed_password
+        current_user.password = hashed_password
 
     try:
         session.commit()
@@ -131,28 +134,30 @@ def update_user(
             detail='Username or Email already exists',
         )
 
-    session.refresh(db_user)
+    session.refresh(current_user)
 
-    return db_user
+    return current_user
 
 
 @app.put(
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserRead
 )
 def replace_user(
-    user_id: int, user: UserReplace, session: Session = Depends(get_session)
+    user_id: int,
+    user: UserReplace,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
 ):
-    db_user = session.get(User, user_id)
-
-    if not db_user:
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
         )
 
-    db_user.username = user.username
-    db_user.email = user.email
+    current_user.username = user.username
+    current_user.email = user.email
     hashed_password = get_password_hash(user.password)
-    db_user.password = hashed_password
+    current_user.password = hashed_password
 
     try:
         session.commit()
@@ -163,19 +168,22 @@ def replace_user(
             detail='Username or Email already exists',
         )
 
-    session.refresh(db_user)
+    session.refresh(current_user)
 
-    return db_user
+    return current_user
 
 
 @app.delete('/users/{user_id}', status_code=HTTPStatus.NO_CONTENT)
-def delete_user(user_id: int, session: Session = Depends(get_session)):
-    db_user = session.get(User, user_id)
-
-    if not db_user:
+def delete_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
         )
 
-    session.delete(db_user)
+    session.delete(current_user)
     session.commit()

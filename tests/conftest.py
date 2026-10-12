@@ -58,6 +58,15 @@ def user(session):
     return user
 
 
+@pytest.fixture
+def token(client, user):
+    response = client.post(
+        '/login',
+        data={'username': user.username, 'password': user.plain_password},
+    )
+    return response.json()['access_token']
+
+
 @contextmanager
 def _mock_db_time(*, model, time=datetime.now()):
 

@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from jwt import decode
 
 from multi_agent_chat.security import (
@@ -16,3 +18,12 @@ def test_access_token():
 
     assert decoded['test'] == claims['test']
     assert 'exp' in decoded
+
+
+def test_invalid_token(client):
+    response = client.delete(
+        '/users/1', headers={'Authorization': 'Bearer token-invalido'}
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Could not validate credentials'}
