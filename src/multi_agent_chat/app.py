@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -8,22 +9,55 @@ from sqlalchemy.orm import Session
 from multi_agent_chat.database import get_session
 from multi_agent_chat.models import User
 from multi_agent_chat.schemas import (
+    Token,
     UserCreate,
     UserList,
     UserRead,
     UserReplace,
     UserUpdate,
 )
+from multi_agent_chat.security import (
+    create_access_token,
+    get_password_hash,
+    verify_password,
+)
 
 app = FastAPI()
 
 
+@app.post('/login', status_code=HTTPStatus.OK, response_model=Token)
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    db_user = session.scalar(
+        select(User).where(User.username == form_data.username)
+    )
+
+    if not db_user:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Incorrect email or password',
+        )
+
+    if not verify_password(form_data.password, db_user.password):
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Incorrect email or password',
+        )
+
+    claims = {'sub': db_user.username}
+    access_token = create_access_token(claims)
+    return {'access_token': access_token, 'token_type': 'Bearer'}
+
+
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserRead)
 def create_user(user: UserCreate, session: Session = Depends(get_session)):
+    hashed_password = get_password_hash(user.password)
     db_user = User(
         username=user.username,
         email=user.email,
-        password=user.password,
+        password=hashed_password,
     )
     session.add(db_user)
 
@@ -85,7 +119,8 @@ def update_user(
     if user.email:
         db_user.email = user.email
     if user.password:
-        db_user.password = user.password
+        hashed_password = get_password_hash(user.password)
+        db_user.password = hashed_password
 
     try:
         session.commit()
@@ -116,7 +151,8 @@ def replace_user(
 
     db_user.username = user.username
     db_user.email = user.email
-    db_user.password = user.password
+    hashed_password = get_password_hash(user.password)
+    db_user.password = hashed_password
 
     try:
         session.commit()

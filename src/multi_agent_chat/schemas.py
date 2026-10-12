@@ -25,3 +25,8 @@ class UserUpdate(BaseModel):
 
 class UserReplace(UserCreate):
     pass
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str

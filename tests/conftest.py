@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from multi_agent_chat.app import app
 from multi_agent_chat.database import get_session
 from multi_agent_chat.models import User, table_registry
+from multi_agent_chat.security import get_password_hash
 
 
 @pytest.fixture
@@ -42,10 +43,18 @@ def session():
 
 @pytest.fixture
 def user(session):
-    user = User(username='test', email='test@example.com', password='test123')
+    plain_password = 'test123'
+    user = User(
+        username='test',
+        email='test@example.com',
+        password=get_password_hash(plain_password),
+    )
     session.add(user)
     session.commit()
     session.refresh(user)
+
+    user.plain_password = plain_password
+
     return user
 
 
