@@ -16,7 +16,7 @@ SECRET_KEY = 'secret-key'
 ALGORITHM = 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = PasswordHash.recommended()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
 
 
 def create_access_token(payload: dict):
@@ -45,7 +45,11 @@ def get_current_user(
     access_token: str = Depends(oauth2_scheme),
 ):
     try:
-        decoded_payload = decode(access_token, SECRET_KEY, algorithms=ALGORITHM)
+        decoded_payload = decode(
+            access_token,
+            SECRET_KEY,
+            algorithms=ALGORITHM,
+        )
         subject_username = decoded_payload.get('sub')
 
         if not subject_username:
