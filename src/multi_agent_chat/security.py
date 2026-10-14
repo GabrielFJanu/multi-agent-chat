@@ -19,16 +19,16 @@ pwd_context = PasswordHash.recommended()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 
 
-def create_access_token(claims: dict):
-    to_encode = claims.copy()
+def create_access_token(payload: dict):
+    payload_to_encode = payload.copy()
 
     expire = datetime.now(tz=ZoneInfo('UTC')) + timedelta(
         minutes=ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
-    to_encode.update({'exp': expire})
+    payload_to_encode.update({'exp': expire})
 
-    access_token = encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    access_token = encode(payload_to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return access_token
 
 
@@ -45,8 +45,8 @@ def get_current_user(
     access_token: str = Depends(oauth2_scheme),
 ):
     try:
-        payload = decode(access_token, SECRET_KEY, algorithms=ALGORITHM)
-        subject_username = payload.get('sub')
+        decoded_payload = decode(access_token, SECRET_KEY, algorithms=ALGORITHM)
+        subject_username = decoded_payload.get('sub')
 
         if not subject_username:
             raise HTTPException(

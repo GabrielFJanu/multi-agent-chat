@@ -47,17 +47,20 @@ def login(
             detail='Incorrect email or password',
         )
 
-    claims = {'sub': db_user.username}
-    access_token = create_access_token(claims)
+    payload = {'sub': db_user.username}
+    access_token = create_access_token(payload)
     return {'access_token': access_token, 'token_type': 'Bearer'}
 
 
 @app.post('/users/', status_code=HTTPStatus.CREATED, response_model=UserRead)
-def create_user(user: UserCreate, session: Session = Depends(get_session)):
-    hashed_password = get_password_hash(user.password)
+def create_user(
+    user_to_create: UserCreate,
+    session: Session = Depends(get_session),
+):
+    hashed_password = get_password_hash(user_to_create.password)
     db_user = User(
-        username=user.username,
-        email=user.email,
+        username=user_to_create.username,
+        email=user_to_create.email,
         password=hashed_password,
     )
     session.add(db_user)
@@ -65,7 +68,6 @@ def create_user(user: UserCreate, session: Session = Depends(get_session)):
     try:
         session.commit()
     except IntegrityError:
-        session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Username or Email already exists',
@@ -89,7 +91,10 @@ def read_users(
 @app.get(
     '/users/{user_id}', status_code=HTTPStatus.OK, response_model=UserRead
 )
-def read_user(user_id: int, session: Session = Depends(get_session)):
+def read_user(
+    user_id: int,
+    session: Session = Depends(get_session),
+):
     db_user = session.get(User, user_id)
 
     if not db_user:
@@ -107,7 +112,7 @@ def read_user(user_id: int, session: Session = Depends(get_session)):
 )
 def update_user(
     user_id: int,
-    user: UserUpdate,
+    user_to_update: UserUpdate,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -117,18 +122,17 @@ def update_user(
             detail='Not enough permissions',
         )
 
-    if user.username:
-        current_user.username = user.username
-    if user.email:
-        current_user.email = user.email
-    if user.password:
-        hashed_password = get_password_hash(user.password)
+    if user_to_update.username:
+        current_user.username = user_to_update.username
+    if user_to_update.email:
+        current_user.email = user_to_update.email
+    if user_to_update.password:
+        hashed_password = get_password_hash(user_to_update.password)
         current_user.password = hashed_password
 
     try:
         session.commit()
     except IntegrityError:
-        session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Username or Email already exists',
@@ -144,7 +148,7 @@ def update_user(
 )
 def replace_user(
     user_id: int,
-    user: UserReplace,
+    user_to_replace: UserReplace,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
@@ -154,15 +158,14 @@ def replace_user(
             detail='Not enough permissions',
         )
 
-    current_user.username = user.username
-    current_user.email = user.email
-    hashed_password = get_password_hash(user.password)
+    current_user.username = user_to_replace.username
+    current_user.email = user_to_replace.email
+    hashed_password = get_password_hash(user_to_replace.password)
     current_user.password = hashed_password
 
     try:
         session.commit()
     except IntegrityError:
-        session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Username or Email already exists',

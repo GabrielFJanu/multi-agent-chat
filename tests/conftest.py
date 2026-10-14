@@ -14,18 +14,6 @@ from multi_agent_chat.security import get_password_hash
 
 
 @pytest.fixture
-def client(session):
-    def get_session_override():
-        return session
-
-    with TestClient(app) as client:
-        app.dependency_overrides[get_session] = get_session_override
-        yield client
-
-    app.dependency_overrides.clear()
-
-
-@pytest.fixture
 def session():
     engine = create_engine(
         'sqlite:///:memory:',
@@ -42,12 +30,25 @@ def session():
 
 
 @pytest.fixture
+def client(session):
+    def get_session_override():
+        return session
+
+    with TestClient(app) as client:
+        app.dependency_overrides[get_session] = get_session_override
+        yield client
+
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
 def user(session):
     plain_password = 'test123'
+    hashed_password = get_password_hash(plain_password)
     user = User(
         username='test',
         email='test@example.com',
-        password=get_password_hash(plain_password),
+        password=hashed_password,
     )
     session.add(user)
     session.commit()

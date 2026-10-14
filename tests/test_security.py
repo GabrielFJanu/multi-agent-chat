@@ -10,17 +10,17 @@ from multi_agent_chat.security import (
 
 
 def test_access_token():
-    claims = {'test': 'test'}
+    payload = {'test': 'test'}
 
-    token = create_access_token(claims)
+    token = create_access_token(payload)
 
-    decoded = decode(token, SECRET_KEY, algorithms=ALGORITHM)
+    decoded_payload = decode(token, SECRET_KEY, algorithms=ALGORITHM)
 
-    assert decoded['test'] == claims['test']
-    assert 'exp' in decoded
+    assert decoded_payload['test'] == payload['test']
+    assert 'exp' in decoded_payload
 
 
-def test_invalid_token(client):
+def test_invalid_access_token(client):
     response = client.delete(
         '/users/1', headers={'Authorization': 'Bearer token-invalido'}
     )

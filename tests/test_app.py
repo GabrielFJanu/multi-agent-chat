@@ -73,7 +73,7 @@ def test_replace_user(client, user, token):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
-        'id': 1,
+        'id': user.id,
         'username': 'test2',
         'email': 'test2@example.com',
     }
