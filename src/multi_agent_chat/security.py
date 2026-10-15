@@ -11,11 +11,10 @@ from sqlalchemy.orm import Session
 
 from multi_agent_chat.database import get_session
 from multi_agent_chat.models import User
+from multi_agent_chat.settings import Settings
 
-SECRET_KEY = 'secret-key'
-ALGORITHM = 'HS256'
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = PasswordHash.recommended()
+settings = Settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
 
 
@@ -23,12 +22,16 @@ def create_access_token(payload: dict):
     payload_to_encode = payload.copy()
 
     expire = datetime.now(tz=ZoneInfo('UTC')) + timedelta(
-        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
 
     payload_to_encode.update({'exp': expire})
 
-    access_token = encode(payload_to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    access_token = encode(
+        payload_to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM,
+    )
     return access_token
 
 
@@ -47,8 +50,8 @@ def get_current_user(
     try:
         decoded_payload = decode(
             access_token,
-            SECRET_KEY,
-            algorithms=ALGORITHM,
+            settings.SECRET_KEY,
+            algorithms=settings.ALGORITHM,
         )
         subject_username = decoded_payload.get('sub')
 

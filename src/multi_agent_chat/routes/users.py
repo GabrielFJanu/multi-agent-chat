@@ -62,15 +62,10 @@ def create_user(
     status_code=HTTPStatus.OK,
     response_model=UserList,
 )
-def read_users(
-    session: Session,
-    pagination: PaginationParams
-):
+def read_users(session: Session, pagination: PaginationParams):
     db_users = session.scalars(
-        select(User)
-        .offset(pagination.offset)
-        .limit(pagination.limit)
-        ).all()
+        select(User).offset(pagination.offset).limit(pagination.limit)
+    ).all()
     return {'users': db_users}
 
 

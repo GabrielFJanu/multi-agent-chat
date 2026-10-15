@@ -2,19 +2,19 @@ from http import HTTPStatus
 
 from jwt import decode
 
-from multi_agent_chat.security import (
-    ALGORITHM,
-    SECRET_KEY,
-    create_access_token,
-)
+from multi_agent_chat.security import create_access_token
 
 
-def test_access_token():
+def test_access_token(settings):
     payload = {'test': 'test'}
 
     token = create_access_token(payload)
 
-    decoded_payload = decode(token, SECRET_KEY, algorithms=ALGORITHM)
+    decoded_payload = decode(
+        token,
+        settings.SECRET_KEY,
+        algorithms=settings.ALGORITHM,
+    )
 
     assert decoded_payload['test'] == payload['test']
     assert 'exp' in decoded_payload
