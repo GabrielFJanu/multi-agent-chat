@@ -13,10 +13,6 @@ class UserResponse(BaseModel):
     email: EmailStr
 
 
-class UserList(BaseModel):
-    users: list[UserResponse]
-
-
 class UserUpdate(BaseModel):
     username: str | None = None
     email: EmailStr | None = None

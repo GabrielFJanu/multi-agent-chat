@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from multi_agent_chat.schemas import Token
 from multi_agent_chat.services.auth import AuthService
 
-router = APIRouter(prefix='/auth', tags=['auth'])
+router = APIRouter(prefix='/auth', tags=['Auth'])
 OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
 Service = Annotated[AuthService, Depends()]
 
