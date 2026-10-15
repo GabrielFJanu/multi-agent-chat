@@ -1,20 +1,26 @@
 from http import HTTPStatus
+from typing import Annotated
+
 from fastapi import Depends, HTTPException
-from multi_agent_chat.repositories.users import UserRepository
+
 from multi_agent_chat.models import User
-from multi_agent_chat.schemas import UserCreate, UserUpdate, UserReplace
+from multi_agent_chat.repositories.users import UserRepository
+from multi_agent_chat.schemas import UserCreate, UserReplace, UserUpdate
 from multi_agent_chat.security import get_password_hash
+
+Repository = Annotated[UserRepository, Depends()]
+
 
 class UserService:
     def __init__(
         self,
-        repository: UserRepository = Depends(),
+        repository: Repository,
     ):
         self.repository = repository
 
     def _get_user_by_id_or_404(self, user_id: int) -> User:
         db_user = self.repository.get_by_id(user_id)
-        
+
         if not db_user:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
@@ -22,7 +28,7 @@ class UserService:
             )
 
         return db_user
-    
+
     def create_user(self, user_in: UserCreate) -> User:
         existing_user = self.repository.find_by_username(user_in.username)
         if existing_user:
@@ -37,11 +43,11 @@ class UserService:
                 status_code=HTTPStatus.CONFLICT,
                 detail='Email already exists',
             )
-        
+
         create_data = user_in.model_dump()
 
-        create_data["password"] = get_password_hash(create_data["password"])
-        
+        create_data['password'] = get_password_hash(create_data['password'])
+
         db_user = self.repository.create(create_data)
         return db_user
 
@@ -63,7 +69,7 @@ class UserService:
                     status_code=HTTPStatus.CONFLICT,
                     detail='Username already exists',
                 )
-            
+
         if user_in.email:
             existing_user = self.repository.find_by_email(user_in.email)
             if existing_user and existing_user.id != user_id:
@@ -75,8 +81,10 @@ class UserService:
         update_data = user_in.model_dump(exclude_unset=True)
 
         if 'password' in update_data:
-            update_data["password"] = get_password_hash(update_data["password"])
-            
+            update_data['password'] = get_password_hash(
+                update_data['password']
+            )
+
         db_user = self.repository.update(db_user, update_data)
         return db_user
 
@@ -89,7 +97,7 @@ class UserService:
                 status_code=HTTPStatus.CONFLICT,
                 detail='Username already exists',
             )
-            
+
         existing_user = self.repository.find_by_email(user_in.email)
         if existing_user and existing_user.id != user_id:
             raise HTTPException(
@@ -99,8 +107,8 @@ class UserService:
 
         replace_data = user_in.model_dump()
 
-        replace_data["password"] = get_password_hash(replace_data["password"])
-        
+        replace_data['password'] = get_password_hash(replace_data['password'])
+
         db_user = self.repository.replace(db_user, replace_data)
         return db_user
 

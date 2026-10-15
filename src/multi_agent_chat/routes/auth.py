@@ -1,10 +1,15 @@
 from http import HTTPStatus
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
+
 from multi_agent_chat.schemas import Token
 from multi_agent_chat.services.auth import AuthService
 
 router = APIRouter(prefix='/auth', tags=['auth'])
+OAuth2Form = Annotated[OAuth2PasswordRequestForm, Depends()]
+Service = Annotated[AuthService, Depends()]
 
 
 @router.post(
@@ -13,8 +18,8 @@ router = APIRouter(prefix='/auth', tags=['auth'])
     response_model=Token,
 )
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    service: AuthService = Depends(),
+    form_data: OAuth2Form,
+    service: Service,
 ):
     return service.login(
         username=form_data.username,

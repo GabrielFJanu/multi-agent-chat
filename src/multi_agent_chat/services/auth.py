@@ -1,12 +1,18 @@
 from http import HTTPStatus
+from typing import Annotated
+
 from fastapi import Depends, HTTPException
+
 from multi_agent_chat.repositories.users import UserRepository
-from multi_agent_chat.security import verify_password, create_access_token
+from multi_agent_chat.security import create_access_token, verify_password
+
+Repository = Annotated[UserRepository, Depends()]
+
 
 class AuthService:
     def __init__(
         self,
-        repository: UserRepository = Depends(),
+        repository: Repository,
     ):
         self.repository = repository
 
@@ -18,11 +24,8 @@ class AuthService:
                 status_code=HTTPStatus.UNAUTHORIZED,
                 detail='Incorrect username or password',
             )
-    
+
         payload = {'sub': db_user.username}
         access_token = create_access_token(payload)
-        
-        return {
-            'access_token': access_token, 
-            'token_type': 'bearer'
-        }
+
+        return {'access_token': access_token, 'token_type': 'bearer'}
