@@ -45,7 +45,7 @@ class UserService:
         db_user = self.repository.create(create_data)
         return db_user
 
-    def get_users(self, skip: int = 0, limit: int = 100) -> list[User]:
+    def list_users(self, skip: int = 0, limit: int = 100) -> list[User]:
         db_users = self.repository.list(skip=skip, limit=limit)
         return db_users
 

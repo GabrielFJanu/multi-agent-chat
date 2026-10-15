@@ -7,14 +7,14 @@ class UserCreate(BaseModel):
     password: str
 
 
-class UserRead(BaseModel):
+class UserResponse(BaseModel):
     id: int
     username: str
     email: EmailStr
 
 
 class UserList(BaseModel):
-    users: list[UserRead]
+    users: list[UserResponse]
 
 
 class UserUpdate(BaseModel):
