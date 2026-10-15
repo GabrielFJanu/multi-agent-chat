@@ -8,10 +8,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
 from multi_agent_chat.app import app
-from multi_agent_chat.database import get_session
+from multi_agent_chat.core.database import get_session
+from multi_agent_chat.core.security import get_password_hash
+from multi_agent_chat.core.settings import Settings
 from multi_agent_chat.models.user import User, table_registry
-from multi_agent_chat.security import get_password_hash
-from multi_agent_chat.settings import Settings
 
 
 @pytest.fixture

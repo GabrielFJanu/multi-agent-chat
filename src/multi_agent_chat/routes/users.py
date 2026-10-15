@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
+from multi_agent_chat.core.security import get_current_user
 from multi_agent_chat.models.user import User
 from multi_agent_chat.schemas.common import PaginationParams
 from multi_agent_chat.schemas.users import (
@@ -11,7 +12,6 @@ from multi_agent_chat.schemas.users import (
     UserResponse,
     UserUpdate,
 )
-from multi_agent_chat.security import get_current_user
 from multi_agent_chat.services.users import UserService
 
 router = APIRouter(prefix='/users', tags=['Users'])

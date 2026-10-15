@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 from multi_agent_chat.models.user import table_registry
-from multi_agent_chat.settings import Settings
+from multi_agent_chat.core.settings import Settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

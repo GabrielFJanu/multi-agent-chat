@@ -3,8 +3,8 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException
 
+from multi_agent_chat.core.security import create_access_token, verify_password
 from multi_agent_chat.repositories.users import UserRepository
-from multi_agent_chat.security import create_access_token, verify_password
 
 Repository = Annotated[UserRepository, Depends()]
 

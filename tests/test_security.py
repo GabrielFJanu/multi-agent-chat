@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from jwt import decode
 
-from multi_agent_chat.security import create_access_token
+from multi_agent_chat.core.security import create_access_token
 
 
 def test_access_token(settings):
