@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
@@ -14,6 +15,8 @@ from multi_agent_chat.security import (
 )
 
 router = APIRouter(prefix='/auth', tags=['auth'])
+OAuthForm = Annotated[OAuth2PasswordRequestForm, Depends()]
+Session = Annotated[Session, Depends(get_session)]
 
 
 @router.post(
@@ -22,8 +25,8 @@ router = APIRouter(prefix='/auth', tags=['auth'])
     response_model=Token,
 )
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    session: Session = Depends(get_session),
+    form_data: OAuthForm,
+    session: Session,
 ):
     db_user = session.scalar(
         select(User).where(User.username == form_data.username)

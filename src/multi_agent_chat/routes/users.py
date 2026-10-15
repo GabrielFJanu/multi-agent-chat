@@ -1,6 +1,7 @@
 from http import HTTPStatus
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -8,6 +9,7 @@ from sqlalchemy.orm import Session
 from multi_agent_chat.database import get_session
 from multi_agent_chat.models import User
 from multi_agent_chat.schemas import (
+    PaginationParams,
     UserCreate,
     UserList,
     UserRead,
@@ -20,6 +22,9 @@ from multi_agent_chat.security import (
 )
 
 router = APIRouter(prefix='/users', tags=['users'])
+Session = Annotated[Session, Depends(get_session)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
+PaginationParams = Annotated[PaginationParams, Query()]
 
 
 @router.post(
@@ -29,7 +34,7 @@ router = APIRouter(prefix='/users', tags=['users'])
 )
 def create_user(
     user_to_create: UserCreate,
-    session: Session = Depends(get_session),
+    session: Session,
 ):
     hashed_password = get_password_hash(user_to_create.password)
     db_user = User(
@@ -58,11 +63,14 @@ def create_user(
     response_model=UserList,
 )
 def read_users(
-    offset: int = 0,
-    limit: int = 100,
-    session: Session = Depends(get_session),
+    session: Session,
+    pagination: PaginationParams
 ):
-    db_users = session.scalars(select(User).offset(offset).limit(limit)).all()
+    db_users = session.scalars(
+        select(User)
+        .offset(pagination.offset)
+        .limit(pagination.limit)
+        ).all()
     return {'users': db_users}
 
 
@@ -73,7 +81,7 @@ def read_users(
 )
 def read_user(
     user_id: int,
-    session: Session = Depends(get_session),
+    session: Session,
 ):
     db_user = session.get(User, user_id)
 
@@ -93,8 +101,8 @@ def read_user(
 def update_user(
     user_id: int,
     user_to_update: UserUpdate,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    session: Session,
+    current_user: CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
@@ -131,8 +139,8 @@ def update_user(
 def replace_user(
     user_id: int,
     user_to_replace: UserReplace,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    session: Session,
+    current_user: CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
@@ -164,8 +172,8 @@ def replace_user(
 )
 def delete_user(
     user_id: int,
-    session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user),
+    session: Session,
+    current_user: CurrentUser,
 ):
     if current_user.id != user_id:
         raise HTTPException(
