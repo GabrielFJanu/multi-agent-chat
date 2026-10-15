@@ -3,9 +3,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from multi_agent_chat.models import User
-from multi_agent_chat.schemas import (
-    PaginationParams,
+from multi_agent_chat.models.user import User
+from multi_agent_chat.schemas.common import PaginationParams
+from multi_agent_chat.schemas.users import (
     UserCreate,
     UserReplace,
     UserResponse,

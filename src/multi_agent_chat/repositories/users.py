@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from multi_agent_chat.database import get_session
-from multi_agent_chat.models import User
+from multi_agent_chat.models.user import User
 
 Session = Annotated[Session, Depends(get_session)]
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr
 
 
 class UserCreate(BaseModel):
@@ -21,13 +21,3 @@ class UserUpdate(BaseModel):
 
 class UserReplace(UserCreate):
     pass
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-class PaginationParams(BaseModel):
-    offset: int = Field(0, ge=0)
-    limit: int = Field(100, ge=1)

@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
-from multi_agent_chat.schemas import Token
+from multi_agent_chat.schemas.auth import Token
 from multi_agent_chat.services.auth import AuthService
 
 router = APIRouter(prefix='/auth', tags=['Auth'])

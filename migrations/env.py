@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from multi_agent_chat.models import table_registry
+from multi_agent_chat.models.user import table_registry
 from multi_agent_chat.settings import Settings
 
 # this is the Alembic Config object, which provides

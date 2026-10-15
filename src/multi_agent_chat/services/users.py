@@ -3,9 +3,9 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException
 
-from multi_agent_chat.models import User
+from multi_agent_chat.models.user import User
 from multi_agent_chat.repositories.users import UserRepository
-from multi_agent_chat.schemas import UserCreate, UserReplace, UserUpdate
+from multi_agent_chat.schemas.users import UserCreate, UserReplace, UserUpdate
 from multi_agent_chat.security import get_password_hash
 
 Repository = Annotated[UserRepository, Depends()]
