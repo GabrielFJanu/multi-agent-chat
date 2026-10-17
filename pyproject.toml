@@ -59,3 +59,7 @@ run = 'fastapi dev src/multi_agent_chat/app.py'
 pre_test = 'task lint'
 test = 'pytest -s -x --cov=src/multi_agent_chat -vv'
 post_test = 'coverage html'
+
+[tool.coverage.run]
+core = "ctrace"
+concurrency = ["thread", "greenlet"]
