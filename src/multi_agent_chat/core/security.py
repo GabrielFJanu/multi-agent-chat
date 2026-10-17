@@ -1,21 +1,21 @@
 from datetime import datetime, timedelta
 from http import HTTPStatus
+from typing import Annotated
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jwt import DecodeError, decode, encode
 from pwdlib import PasswordHash
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from multi_agent_chat.core.database import get_session
 from multi_agent_chat.core.settings import Settings
-from multi_agent_chat.models.user import User
+from multi_agent_chat.repositories.users import UserRepository
 
 pwd_context = PasswordHash.recommended()
 settings = Settings()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
+Repository = Annotated[UserRepository, Depends()]
+AccessToken = Annotated[str, Depends(oauth2_scheme)]
 
 
 def create_access_token(payload: dict):
@@ -44,8 +44,8 @@ def verify_password(plain_password: str, hashed_password: str):
 
 
 async def get_current_user(
-    session: AsyncSession = Depends(get_session),
-    access_token: str = Depends(oauth2_scheme),
+    repository: Repository,
+    access_token: AccessToken,
 ):
     try:
         decoded_payload = decode(
@@ -68,9 +68,7 @@ async def get_current_user(
             headers={'WWW-Authenticate': 'Bearer'},
         )
 
-    db_user = await session.scalar(
-        select(User).where(User.username == subject_username)
-    )
+    db_user = await repository.find_by_username(subject_username)
 
     if not db_user:
         raise HTTPException(
