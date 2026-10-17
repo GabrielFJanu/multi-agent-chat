@@ -3,7 +3,11 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException
 
-from multi_agent_chat.core.security import create_access_token, verify_password
+from multi_agent_chat.core.security import (
+    create_access_token,
+    verify_password,
+)
+from multi_agent_chat.models.user import User
 from multi_agent_chat.repositories.users import UserRepository
 
 Repository = Annotated[UserRepository, Depends()]
@@ -28,4 +32,12 @@ class AuthService:
         payload = {'sub': db_user.username}
         access_token = create_access_token(payload)
 
-        return {'access_token': access_token, 'token_type': 'bearer'}
+        return {'access_token': access_token, 'token_type': 'Bearer'}
+
+    @staticmethod
+    async def refresh_token(user: User) -> dict:
+
+        payload = {'sub': user.username}
+        new_access_token = create_access_token(payload)
+
+        return {'access_token': new_access_token, 'token_type': 'Bearer'}
