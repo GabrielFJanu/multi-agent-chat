@@ -13,15 +13,15 @@ Service = Annotated[AuthService, Depends()]
 
 
 @router.post(
-    '/login',
+    '/token',
     status_code=HTTPStatus.OK,
     response_model=Token,
 )
-async def login(
+async def login_for_access_token(
     form_data: OAuth2Form,
     service: Service,
 ):
-    return await service.login(
+    return await service.authenticate_user(
         username=form_data.username,
         password=form_data.password,
     )

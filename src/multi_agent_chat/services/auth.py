@@ -16,7 +16,7 @@ class AuthService:
     ):
         self.repository = repository
 
-    async def login(self, username: str, password: str) -> dict:
+    async def authenticate_user(self, username: str, password: str) -> dict:
         db_user = await self.repository.find_by_username(username)
 
         if not db_user or not verify_password(password, db_user.password):
