@@ -16,8 +16,8 @@ class AuthService:
     ):
         self.repository = repository
 
-    def login(self, username: str, password: str) -> dict:
-        db_user = self.repository.find_by_username(username)
+    async def login(self, username: str, password: str) -> dict:
+        db_user = await self.repository.find_by_username(username)
 
         if not db_user or not verify_password(password, db_user.password):
             raise HTTPException(

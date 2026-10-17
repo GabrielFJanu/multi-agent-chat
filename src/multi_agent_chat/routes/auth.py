@@ -17,11 +17,11 @@ Service = Annotated[AuthService, Depends()]
     status_code=HTTPStatus.OK,
     response_model=Token,
 )
-def login(
+async def login(
     form_data: OAuth2Form,
     service: Service,
 ):
-    return service.login(
+    return await service.login(
         username=form_data.username,
         password=form_data.password,
     )

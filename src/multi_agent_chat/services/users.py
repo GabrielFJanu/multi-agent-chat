@@ -18,8 +18,8 @@ class UserService:
     ):
         self.repository = repository
 
-    def _get_user_by_id_or_404(self, user_id: int) -> User:
-        db_user = self.repository.get_by_id(user_id)
+    async def _get_user_by_id_or_404(self, user_id: int) -> User:
+        db_user = await self.repository.get_by_id(user_id)
 
         if not db_user:
             raise HTTPException(
@@ -29,15 +29,17 @@ class UserService:
 
         return db_user
 
-    def create_user(self, user_in: UserCreate) -> User:
-        existing_user = self.repository.find_by_username(user_in.username)
+    async def create_user(self, user_in: UserCreate) -> User:
+        existing_user = await self.repository.find_by_username(
+            user_in.username
+        )
         if existing_user:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
                 detail='Username already exists',
             )
 
-        existing_user = self.repository.find_by_email(user_in.email)
+        existing_user = await self.repository.find_by_email(user_in.email)
         if existing_user:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
@@ -48,22 +50,24 @@ class UserService:
 
         create_data['password'] = get_password_hash(create_data['password'])
 
-        db_user = self.repository.create(create_data)
+        db_user = await self.repository.create(create_data)
         return db_user
 
-    def list_users(self, skip: int = 0, limit: int = 100) -> list[User]:
-        db_users = self.repository.list(skip=skip, limit=limit)
+    async def list_users(self, skip: int = 0, limit: int = 100) -> list[User]:
+        db_users = await self.repository.list(skip=skip, limit=limit)
         return db_users
 
-    def get_user_by_id(self, user_id: int) -> User:
-        db_user = self._get_user_by_id_or_404(user_id)
+    async def get_user_by_id(self, user_id: int) -> User:
+        db_user = await self._get_user_by_id_or_404(user_id)
         return db_user
 
-    def update_user(self, user_id: int, user_in: UserUpdate) -> User:
-        db_user = self._get_user_by_id_or_404(user_id)
+    async def update_user(self, user_id: int, user_in: UserUpdate) -> User:
+        db_user = await self._get_user_by_id_or_404(user_id)
 
         if user_in.username:
-            existing_user = self.repository.find_by_username(user_in.username)
+            existing_user = await self.repository.find_by_username(
+                user_in.username
+            )
             if existing_user and existing_user.id != user_id:
                 raise HTTPException(
                     status_code=HTTPStatus.CONFLICT,
@@ -71,7 +75,7 @@ class UserService:
                 )
 
         if user_in.email:
-            existing_user = self.repository.find_by_email(user_in.email)
+            existing_user = await self.repository.find_by_email(user_in.email)
             if existing_user and existing_user.id != user_id:
                 raise HTTPException(
                     status_code=HTTPStatus.CONFLICT,
@@ -85,20 +89,22 @@ class UserService:
                 update_data['password']
             )
 
-        db_user = self.repository.update(db_user, update_data)
+        db_user = await self.repository.update(db_user, update_data)
         return db_user
 
-    def replace_user(self, user_id: int, user_in: UserReplace) -> User:
-        db_user = self._get_user_by_id_or_404(user_id)
+    async def replace_user(self, user_id: int, user_in: UserReplace) -> User:
+        db_user = await self._get_user_by_id_or_404(user_id)
 
-        existing_user = self.repository.find_by_username(user_in.username)
+        existing_user = await self.repository.find_by_username(
+            user_in.username
+        )
         if existing_user and existing_user.id != user_id:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
                 detail='Username already exists',
             )
 
-        existing_user = self.repository.find_by_email(user_in.email)
+        existing_user = await self.repository.find_by_email(user_in.email)
         if existing_user and existing_user.id != user_id:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
@@ -109,9 +115,9 @@ class UserService:
 
         replace_data['password'] = get_password_hash(replace_data['password'])
 
-        db_user = self.repository.replace(db_user, replace_data)
+        db_user = await self.repository.replace(db_user, replace_data)
         return db_user
 
-    def delete_user(self, user_id: int) -> None:
-        db_user = self._get_user_by_id_or_404(user_id)
-        self.repository.delete(db_user)
+    async def delete_user(self, user_id: int) -> None:
+        db_user = await self._get_user_by_id_or_404(user_id)
+        await self.repository.delete(db_user)

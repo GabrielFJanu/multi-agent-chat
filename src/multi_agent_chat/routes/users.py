@@ -21,43 +21,45 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post('/', response_model=UserResponse, status_code=HTTPStatus.CREATED)
-def create_user(user_in: UserCreate, service: Service):
-    return service.create_user(user_in)
+async def create_user(user_in: UserCreate, service: Service):
+    return await service.create_user(user_in)
 
 
 @router.get('/', response_model=list[UserResponse])
-def list_users(pagination: Pagination, service: Service):
-    return service.list_users(
+async def list_users(pagination: Pagination, service: Service):
+    return await service.list_users(
         skip=pagination.offset,
         limit=pagination.limit,
     )
 
 
 @router.get('/{user_id}', response_model=UserResponse)
-def get_user(user_id: int, service: Service):
-    return service.get_user_by_id(user_id)
+async def get_user(user_id: int, service: Service):
+    return await service.get_user_by_id(user_id)
 
 
 @router.patch('/{user_id}', response_model=UserResponse)
-def update_user(
+async def update_user(
     user_id: int,
     user_in: UserUpdate,
     service: Service,
     current_user: CurrentUser,
 ):
-    return service.update_user(user_id, user_in)
+    return await service.update_user(user_id, user_in)
 
 
 @router.put('/{user_id}', response_model=UserResponse)
-def replace_user(
+async def replace_user(
     user_id: int,
     user_in: UserReplace,
     service: Service,
     current_user: CurrentUser,
 ):
-    return service.replace_user(user_id, user_in)
+    return await service.replace_user(user_id, user_in)
 
 
 @router.delete('/{user_id}', status_code=HTTPStatus.NO_CONTENT)
-def delete_user(user_id: int, service: Service, current_user: CurrentUser):
-    service.delete_user(user_id)
+async def delete_user(
+    user_id: int, service: Service, current_user: CurrentUser
+):
+    await service.delete_user(user_id)
