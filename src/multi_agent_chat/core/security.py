@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from jwt import DecodeError, decode, encode
+from jwt import DecodeError, ExpiredSignatureError, decode, encode
 from pwdlib import PasswordHash
 
 from multi_agent_chat.core.settings import Settings
@@ -61,7 +61,15 @@ async def get_current_user(
                 detail='Could not validate credentials',
                 headers={'WWW-Authenticate': 'Bearer'},
             )
+
     except DecodeError:
+        raise HTTPException(
+            status_code=HTTPStatus.UNAUTHORIZED,
+            detail='Could not validate credentials',
+            headers={'WWW-Authenticate': 'Bearer'},
+        )
+
+    except ExpiredSignatureError:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
             detail='Could not validate credentials',
