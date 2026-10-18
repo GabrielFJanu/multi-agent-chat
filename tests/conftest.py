@@ -12,7 +12,7 @@ from multi_agent_chat.app import app
 from multi_agent_chat.core.database import get_session
 from multi_agent_chat.core.security import get_password_hash
 from multi_agent_chat.core.settings import Settings
-from multi_agent_chat.models.user import User, table_registry
+from multi_agent_chat.models.user import User, UserRole, table_registry
 
 
 @pytest.fixture
@@ -72,6 +72,31 @@ def token(client, user):
     response = client.post(
         '/auth/token',
         data={'username': user.username, 'password': user.plain_password},
+    )
+    return response.json()['access_token']
+
+
+@pytest_asyncio.fixture
+async def admin(session):
+    plain_password = 'admin123'
+    admin = User(
+        username='admin',
+        email='admin@example.com',
+        password=get_password_hash(plain_password),
+        role=UserRole.ADMIN,
+    )
+    session.add(admin)
+    await session.commit()
+    await session.refresh(admin)
+    admin.plain_password = plain_password
+    return admin
+
+
+@pytest.fixture
+def admin_token(client, admin):
+    response = client.post(
+        '/auth/token',
+        data={'username': admin.username, 'password': admin.plain_password},
     )
     return response.json()['access_token']
 

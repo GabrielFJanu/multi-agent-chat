@@ -3,7 +3,7 @@ from dataclasses import asdict
 import pytest
 from sqlalchemy import select
 
-from multi_agent_chat.models.user import User
+from multi_agent_chat.models.user import User, UserRole
 
 
 @pytest.mark.asyncio
@@ -24,6 +24,7 @@ async def test_create_user(session, mock_db_time):
         'username': 'test',
         'email': 'teste@example.com',
         'password': 'test123',
+        'role': UserRole.USER,
         'created_at': time,
         'updated_at': time,
     }
