@@ -3,8 +3,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 
-from multi_agent_chat.core.security import get_current_user
 from multi_agent_chat.core.dependencies import RoleChecker
+from multi_agent_chat.core.security import get_current_user
 from multi_agent_chat.models.user import User, UserRole
 from multi_agent_chat.schemas.common import PaginationParams
 from multi_agent_chat.schemas.users import (

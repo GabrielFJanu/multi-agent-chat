@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from pydantic import BaseModel, EmailStr
 
 from multi_agent_chat.models.user import UserRole

@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_as_dataclass, mapped_column, registry
 
 table_registry = registry()
 
+
 class UserRole(str, enum.Enum):
     ADMIN = 'admin'
     USER = 'user'
