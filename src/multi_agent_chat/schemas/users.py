@@ -1,4 +1,7 @@
+from datetime import datetime
 from pydantic import BaseModel, EmailStr
+
+from multi_agent_chat.models.user import UserRole
 
 
 class UserCreate(BaseModel):
@@ -11,6 +14,9 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: EmailStr
+    role: UserRole
+    created_at: datetime
+    updated_at: datetime
 
 
 class UserUpdate(BaseModel):
@@ -19,5 +25,13 @@ class UserUpdate(BaseModel):
     password: str | None = None
 
 
+class UserAdminUpdate(UserUpdate):
+    role: UserRole | None = None
+
+
 class UserReplace(UserCreate):
     pass
+
+
+class UserAdminReplace(UserReplace):
+    role: UserRole

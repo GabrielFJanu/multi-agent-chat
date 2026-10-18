@@ -4,9 +4,15 @@ from typing import Annotated
 from fastapi import Depends, HTTPException
 
 from multi_agent_chat.core.security import get_password_hash
-from multi_agent_chat.models.user import User
+from multi_agent_chat.models.user import User, UserRole
 from multi_agent_chat.repositories.users import UserRepository
-from multi_agent_chat.schemas.users import UserCreate, UserReplace, UserUpdate
+from multi_agent_chat.schemas.users import (
+    UserAdminReplace,
+    UserAdminUpdate,
+    UserCreate,
+    UserReplace,
+    UserUpdate,
+)
 
 Repository = Annotated[UserRepository, Depends()]
 
@@ -49,6 +55,7 @@ class UserService:
         create_data = user_in.model_dump()
 
         create_data['password'] = get_password_hash(create_data['password'])
+        create_data['role'] = UserRole.USER
 
         db_user = await self.repository.create(create_data)
         return db_user
@@ -61,7 +68,11 @@ class UserService:
         db_user = await self._get_user_by_id_or_404(user_id)
         return db_user
 
-    async def update_user(self, user_id: int, user_in: UserUpdate) -> User:
+    async def update_user(
+        self,
+        user_id: int,
+        user_in: UserUpdate | UserAdminUpdate,
+    ) -> User:
         db_user = await self._get_user_by_id_or_404(user_id)
 
         if user_in.username:
@@ -92,7 +103,11 @@ class UserService:
         db_user = await self.repository.update(db_user, update_data)
         return db_user
 
-    async def replace_user(self, user_id: int, user_in: UserReplace) -> User:
+    async def replace_user(
+        self,
+        user_id: int,
+        user_in: UserReplace | UserAdminReplace,
+    ) -> User:
         db_user = await self._get_user_by_id_or_404(user_id)
 
         existing_user = await self.repository.find_by_username(
