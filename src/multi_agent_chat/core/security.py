@@ -13,7 +13,7 @@ from multi_agent_chat.repositories.users import UserRepository
 
 pwd_context = PasswordHash.recommended()
 settings = Settings()
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/token')
 Repository = Annotated[UserRepository, Depends()]
 AccessToken = Annotated[str, Depends(oauth2_scheme)]
 
