@@ -78,7 +78,7 @@ async def delete_my_account(
     service: Service,
     current_user: CurrentUser,
 ):
-    return await service.delete_user(current_user.id)
+    await service.delete_user(current_user.id)
 
 
 # only admin
@@ -143,7 +143,7 @@ async def admin_replace_user(
 
 
 # only admin
-@router.admin_delete_user(
+@router.delete(
     '/{user_id}',
     status_code=HTTPStatus.NO_CONTENT,
 )
