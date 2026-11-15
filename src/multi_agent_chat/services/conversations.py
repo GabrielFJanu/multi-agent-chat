@@ -16,17 +16,17 @@ from multi_agent_chat.schemas.conversations import (
 )
 
 Repository = Annotated[ConversationRepository, Depends()]
-Agents = Annotated[AgentRepository, Depends()]
+AgentRepositoryDependency = Annotated[AgentRepository, Depends()]
 
 
 class ConversationService:
     def __init__(
         self,
         repository: Repository,
-        agents: Agents,
+        agent_repository: AgentRepositoryDependency,
     ):
         self.repository = repository
-        self.agents = agents
+        self.agent_repository = agent_repository
 
     async def _get_conversation_by_id_or_404(
         self, conversation_id: int, user_id: int
@@ -119,7 +119,7 @@ class ConversationService:
         conversation = await self._get_conversation_by_id_or_404(
             conversation_id, user_id
         )
-        agent = await self.agents.get_by_id(agent_id)
+        agent = await self.agent_repository.get_by_id(agent_id)
         if agent is None:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND, detail='Agent not found'
@@ -135,7 +135,9 @@ class ConversationService:
         limit: int = 100,
     ) -> list[Agent]:
         await self._get_conversation_by_id_or_404(conversation_id, user_id)
-        return await self.repository.list_agents(conversation_id, skip, limit)
+        return await self.repository.list_agents(
+            conversation_id, skip=skip, limit=limit
+        )
 
     async def remove_agent(
         self, conversation_id: int, agent_id: int, user_id: int

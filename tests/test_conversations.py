@@ -1,11 +1,8 @@
 from http import HTTPStatus
 
 import pytest
-import pytest_asyncio
 
-from multi_agent_chat.core.security import create_access_token
 from multi_agent_chat.models.conversation import Conversation
-from multi_agent_chat.models.user import User
 
 
 def test_create_conversation(client, user, token, mock_db_time):
@@ -196,11 +193,3 @@ def test_full_payload_required(client, token, method, path):
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-
-
-@pytest_asyncio.fixture
-async def other_token(session):
-    user = User(username='other', email='other@example.com', password='unused')
-    session.add(user)
-    await session.commit()
-    return create_access_token({'sub': user.username})

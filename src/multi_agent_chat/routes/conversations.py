@@ -119,6 +119,7 @@ async def delete_conversation(
 # authenticated owner
 @router.get(
     '/{conversation_id}/agents',
+    status_code=HTTPStatus.OK,
     response_model=list[AgentResponse],
 )
 async def list_conversation_agents(
@@ -138,6 +139,7 @@ async def list_conversation_agents(
 # authenticated owner
 @router.put(
     '/{conversation_id}/agents/{agent_id}',
+    status_code=HTTPStatus.OK,
     response_model=AgentResponse,
 )
 async def add_conversation_agent(

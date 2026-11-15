@@ -1,204 +1,252 @@
 from http import HTTPStatus
 
 import pytest
-from sqlalchemy import func, select
-
-from multi_agent_chat.models import (
-    Agent,
-    Conversation,
-    User,
-    UserRole,
-    conversation_agents,
-)
 
 
-@pytest.mark.asyncio
-async def test_many_to_many_and_duplicate_membership(
-    client, session, conversation, agent, token
+def test_add_conversation_agent(client, conversation, agent, token):
+    response = client.put(
+        f'/conversations/{conversation.id}/agents/{agent.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'id': agent.id,
+        'name': agent.name,
+        'description': agent.description,
+        'model': agent.model,
+        'system_prompt': agent.system_prompt,
+        'temperature': agent.temperature,
+        'created_at': agent.created_at.isoformat(),
+        'updated_at': agent.updated_at.isoformat(),
+    }
+
+
+def test_list_conversation_agents(
+    client, conversation_with_agent, agent, token
 ):
-    second_agent = Agent(
-        name='second',
-        description='Second agent',
-        model='test',
-        system_prompt='Help.',
-        temperature=0.5,
-    )
-    second_conversation = Conversation(
-        user_id=conversation.user_id, title='Second conversation'
-    )
-    session.add_all([second_agent, second_conversation])
-    await session.commit()
-    headers = {'Authorization': f'Bearer {token}'}
-    for conversation_id, agent_id in [
-        (conversation.id, agent.id),
-        (conversation.id, second_agent.id),
-        (second_conversation.id, agent.id),
-        (conversation.id, agent.id),
-    ]:
-        response = client.put(
-            f'/conversations/{conversation_id}/agents/{agent_id}',
-            headers=headers,
-        )
-        assert response.status_code == HTTPStatus.OK
-        assert response.json()['id'] == agent_id
-
-    count = await session.scalar(
-        select(func.count()).select_from(conversation_agents)
-    )
-    expected_links = 3
-    assert count == expected_links
     response = client.get(
-        f'/conversations/{conversation.id}/agents', headers=headers
+        f'/conversations/{conversation_with_agent.id}/agents',
+        headers={'Authorization': f'Bearer {token}'},
     )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == [
+        {
+            'id': agent.id,
+            'name': agent.name,
+            'description': agent.description,
+            'model': agent.model,
+            'system_prompt': agent.system_prompt,
+            'temperature': agent.temperature,
+            'created_at': agent.created_at.isoformat(),
+            'updated_at': agent.updated_at.isoformat(),
+        }
+    ]
+
+
+def test_list_conversation_agents_with_offset(
+    client, conversation_with_agent, token
+):
+    response = client.get(
+        f'/conversations/{conversation_with_agent.id}/agents?offset=1',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == []
+
+
+def test_add_conversation_agent_is_idempotent(
+    client, conversation_with_agent, agent, token
+):
+    response = client.put(
+        f'/conversations/{conversation_with_agent.id}/agents/{agent.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    response = client.get(
+        f'/conversations/{conversation_with_agent.id}/agents',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert [item['id'] for item in response.json()] == [agent.id]
+
+
+def test_conversation_supports_multiple_agents(
+    client, conversation_with_agent, agent, second_agent, token
+):
+    path = f'/conversations/{conversation_with_agent.id}/agents'
+    response = client.put(
+        f'{path}/{second_agent.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    response = client.get(path, headers={'Authorization': f'Bearer {token}'})
+    assert response.status_code == HTTPStatus.OK
     assert [item['id'] for item in response.json()] == [
         agent.id,
         second_agent.id,
     ]
     response = client.get(
-        f'/conversations/{conversation.id}/agents?offset=1&limit=1',
+        f'{path}?offset=1&limit=1',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert [item['id'] for item in response.json()] == [second_agent.id]
+
+
+def test_remove_conversation_agent(
+    client, conversation_with_agent, agent, token
+):
+    path = f'/conversations/{conversation_with_agent.id}/agents'
+    headers = {'Authorization': f'Bearer {token}'}
+    response = client.delete(f'{path}/{agent.id}', headers=headers)
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+    assert response.content == b''
+    response = client.get(path, headers=headers)
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == []
+    response = client.get(f'/agents/{agent.id}', headers=headers)
+    assert response.status_code == HTTPStatus.OK
+    response = client.get(
+        f'/conversations/{conversation_with_agent.id}', headers=headers
+    )
+    assert response.status_code == HTTPStatus.OK
+    response = client.delete(f'{path}/{agent.id}', headers=headers)
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Agent not found in conversation'}
+
+
+def test_remove_agent_preserves_other_conversation(
+    client,
+    conversation_with_agent,
+    second_conversation_with_agent,
+    agent,
+    token,
+):
+    headers = {'Authorization': f'Bearer {token}'}
+    response = client.delete(
+        f'/conversations/{conversation_with_agent.id}/agents/{agent.id}',
         headers=headers,
     )
-    assert [item['id'] for item in response.json()] == [second_agent.id]
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
     response = client.get(
-        f'/conversations/{second_conversation.id}/agents', headers=headers
+        f'/conversations/{second_conversation_with_agent.id}/agents',
+        headers=headers,
     )
+    assert response.status_code == HTTPStatus.OK
     assert [item['id'] for item in response.json()] == [agent.id]
 
 
-def test_remove_agent_preserves_agent_and_conversation(
-    client, conversation, agent, token
+@pytest.mark.parametrize('access_token', ['other_token', 'admin_token'])
+@pytest.mark.parametrize('method', ['get', 'put', 'delete'])
+def test_other_users_cannot_manage_conversation_agents(
+    client, conversation_with_agent, request, access_token, method
 ):
-    headers = {'Authorization': f'Bearer {token}'}
-    path = f'/conversations/{conversation.id}/agents/{agent.id}'
-    assert client.put(path, headers=headers).status_code == HTTPStatus.OK
-    assert (
-        client.delete(path, headers=headers).status_code
-        == HTTPStatus.NO_CONTENT
+    agent = request.getfixturevalue('agent')
+    token = request.getfixturevalue('token')
+    other_token = request.getfixturevalue(access_token)
+    path = f'/conversations/{conversation_with_agent.id}/agents'
+    target_agent = (
+        request.getfixturevalue('second_agent') if method == 'put' else agent
     )
-    assert (
-        client.get(
-            f'/conversations/{conversation.id}/agents', headers=headers
-        ).json()
-        == []
-    )
-    assert (
-        client.get(f'/agents/{agent.id}', headers=headers).status_code
-        == HTTPStatus.OK
-    )
-    assert (
-        client.get(
-            f'/conversations/{conversation.id}', headers=headers
-        ).status_code
-        == HTTPStatus.OK
-    )
-    assert (
-        client.delete(path, headers=headers).status_code
-        == HTTPStatus.NOT_FOUND
+    target = path if method == 'get' else f'{path}/{target_agent.id}'
+    response = client.request(
+        method,
+        target,
+        headers={'Authorization': f'Bearer {other_token}'},
     )
 
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Conversation not found'}
+    response = client.get(path, headers={'Authorization': f'Bearer {token}'})
+    assert response.status_code == HTTPStatus.OK
+    assert [item['id'] for item in response.json()] == [agent.id]
 
-@pytest.fixture
-def membership_context(client, conversation, agent, token, admin_token):
-    return client, conversation, agent, token, admin_token
 
-
-@pytest.mark.parametrize('method', ['get', 'put', 'delete'])
-@pytest.mark.parametrize('role', ['user', 'admin'])
-@pytest.mark.asyncio
-async def test_other_owner_cannot_manage_membership(
-    session, membership_context, method, role
+@pytest.mark.parametrize(
+    ('method', 'path'),
+    [
+        ('get', '/conversations/1/agents'),
+        ('put', '/conversations/1/agents/1'),
+        ('delete', '/conversations/1/agents/1'),
+    ],
+)
+def test_conversation_agent_routes_require_authentication(
+    client, method, path
 ):
-    client, conversation, agent, _, admin_token = membership_context
-    admin = await session.scalar(select(User).where(User.username == 'admin'))
-    admin.role = UserRole(role)
-    await session.commit()
-    path = f'/conversations/{conversation.id}/agents'
-    if method != 'get':
-        path += f'/{agent.id}'
+    response = client.request(method, path)
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.parametrize(
+    ('method', 'path'),
+    [
+        ('get', '/conversations/999/agents'),
+        ('put', '/conversations/999/agents/1'),
+        ('delete', '/conversations/999/agents/1'),
+    ],
+)
+def test_conversation_not_found(client, token, method, path):
     response = client.request(
-        method, path, headers={'Authorization': f'Bearer {admin_token}'}
+        method,
+        path,
+        headers={'Authorization': f'Bearer {token}'},
     )
+
     assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json()['detail'] == 'Conversation not found'
+    assert response.json() == {'detail': 'Conversation not found'}
 
 
-@pytest.mark.parametrize('method', ['get', 'put', 'delete'])
-def test_membership_requires_authentication(client, method):
-    path = '/conversations/999/agents'
-    if method != 'get':
-        path += '/999'
-    assert client.request(method, path).status_code == HTTPStatus.UNAUTHORIZED
-
-
-@pytest.mark.parametrize('method', ['get', 'put', 'delete'])
-def test_missing_conversation(client, token, method):
-    path = '/conversations/999/agents'
-    if method != 'get':
-        path += '/999'
-    response = client.request(
-        method, path, headers={'Authorization': f'Bearer {token}'}
-    )
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert response.json()['detail'] == 'Conversation not found'
-
-
-@pytest.mark.parametrize('method', ['put', 'delete'])
-def test_missing_agent(client, conversation, token, method):
+@pytest.mark.parametrize(
+    ('method', 'detail'),
+    [
+        ('put', 'Agent not found'),
+        ('delete', 'Agent not found in conversation'),
+    ],
+)
+def test_agent_not_found(client, conversation, token, method, detail):
     response = client.request(
         method,
         f'/conversations/{conversation.id}/agents/999',
         headers={'Authorization': f'Bearer {token}'},
     )
+
     assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': detail}
 
 
-@pytest.mark.asyncio
-@pytest.mark.parametrize('target', ['conversation', 'agent'])
-async def test_delete_parent_cleans_membership(
-    session, membership_context, target
+def test_delete_conversation_preserves_agent(
+    client, conversation_with_agent, agent, token
 ):
-    client, conversation, agent, token, admin_token = membership_context
     headers = {'Authorization': f'Bearer {token}'}
-    client.put(
-        f'/conversations/{conversation.id}/agents/{agent.id}', headers=headers
+    response = client.delete(
+        f'/conversations/{conversation_with_agent.id}', headers=headers
     )
-    if target == 'conversation':
-        path = f'/conversations/{conversation.id}'
-    else:
-        headers = {'Authorization': f'Bearer {admin_token}'}
-        path = f'/agents/{agent.id}'
-    assert (
-        client.delete(path, headers=headers).status_code
-        == HTTPStatus.NO_CONTENT
-    )
-    count = await session.scalar(
-        select(func.count()).select_from(conversation_agents)
-    )
-    assert count == 0
-    if target == 'conversation':
-        assert await session.get(Agent, agent.id) is not None
-    else:
-        assert await session.get(Conversation, conversation.id) is not None
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+    response = client.get(f'/agents/{agent.id}', headers=headers)
+    assert response.status_code == HTTPStatus.OK
 
 
-@pytest.mark.asyncio
-async def test_relationships_persist_from_both_sides(
-    session, conversation, agent
+def test_delete_agent_removes_conversation_membership(
+    client, conversation_with_agent, agent, admin_token, token
 ):
-    await session.refresh(conversation, ['agents'])
-    conversation.agents.append(agent)
-    await session.commit()
-    session.expire_all()
-
-    await session.refresh(agent, ['conversations'])
-    assert agent.conversations == [conversation]
-    agent.conversations.remove(conversation)
-    await session.commit()
-    session.expire_all()
-
-    await session.refresh(conversation, ['agents'])
-    assert conversation.agents == []
-    count = await session.scalar(
-        select(func.count()).select_from(conversation_agents)
+    response = client.delete(
+        f'/agents/{agent.id}',
+        headers={'Authorization': f'Bearer {admin_token}'},
     )
-    assert count == 0
+
+    assert response.status_code == HTTPStatus.NO_CONTENT
+    response = client.get(
+        f'/conversations/{conversation_with_agent.id}/agents',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == []

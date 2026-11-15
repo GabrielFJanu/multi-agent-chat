@@ -85,6 +85,7 @@ class ConversationRepository:
         try:
             await self.session.commit()
         except IntegrityError:
+            # A concurrent PUT may have created the same membership.
             await self.session.rollback()
             existing = await self.session.scalar(
                 select(Agent)

@@ -10,7 +10,10 @@ from sqlalchemy.pool import StaticPool
 
 from multi_agent_chat.app import app
 from multi_agent_chat.core.database import get_session
-from multi_agent_chat.core.security import get_password_hash
+from multi_agent_chat.core.security import (
+    create_access_token,
+    get_password_hash,
+)
 from multi_agent_chat.core.settings import Settings
 from multi_agent_chat.models import (
     Agent,
@@ -146,6 +149,47 @@ async def agent(session):
 @pytest_asyncio.fixture
 async def conversation(session, user):
     conversation = Conversation(user_id=user.id, title='Test conversation')
+    session.add(conversation)
+    await session.commit()
+    await session.refresh(conversation)
+    return conversation
+
+
+@pytest_asyncio.fixture
+async def other_token(session):
+    user = User(username='other', email='other@example.com', password='unused')
+    session.add(user)
+    await session.commit()
+    return create_access_token({'sub': user.username})
+
+
+@pytest_asyncio.fixture
+async def conversation_with_agent(session, conversation, agent):
+    await session.refresh(conversation, ['agents'])
+    conversation.agents.append(agent)
+    await session.commit()
+    return conversation
+
+
+@pytest_asyncio.fixture
+async def second_agent(session):
+    agent = Agent(
+        name='second',
+        description='Second agent',
+        model='test-model',
+        system_prompt='Be helpful.',
+        temperature=0.5,
+    )
+    session.add(agent)
+    await session.commit()
+    await session.refresh(agent)
+    return agent
+
+
+@pytest_asyncio.fixture
+async def second_conversation_with_agent(session, user, agent):
+    conversation = Conversation(user_id=user.id, title='Second conversation')
+    conversation.agents.append(agent)
     session.add(conversation)
     await session.commit()
     await session.refresh(conversation)
