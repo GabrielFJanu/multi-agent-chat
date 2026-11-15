@@ -51,7 +51,6 @@ class AgentRepository:
         await self.session.refresh(db_obj)
         return db_obj
 
-    async def delete(self, db_obj: Agent) -> Agent:
+    async def delete(self, db_obj: Agent) -> None:
         await self.session.delete(db_obj)
         await self.session.commit()
-        return db_obj

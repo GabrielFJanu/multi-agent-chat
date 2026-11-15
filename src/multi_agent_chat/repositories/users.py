@@ -24,7 +24,7 @@ class UserRepository:
 
     async def list(self, skip: int = 0, limit: int = 100) -> list[User]:
         result = await self.session.scalars(
-            select(User).offset(skip).limit(limit)
+            select(User).order_by(User.id).offset(skip).limit(limit)
         )
         db_users = result.all()
         return db_users
@@ -61,7 +61,6 @@ class UserRepository:
         await self.session.refresh(db_obj)
         return db_obj
 
-    async def delete(self, db_obj: User) -> User:
+    async def delete(self, db_obj: User) -> None:
         await self.session.delete(db_obj)
         await self.session.commit()
-        return db_obj

@@ -12,7 +12,13 @@ from multi_agent_chat.app import app
 from multi_agent_chat.core.database import get_session
 from multi_agent_chat.core.security import get_password_hash
 from multi_agent_chat.core.settings import Settings
-from multi_agent_chat.models import Agent, User, UserRole, table_registry
+from multi_agent_chat.models import (
+    Agent,
+    Conversation,
+    User,
+    UserRole,
+    table_registry,
+)
 
 
 @pytest.fixture
@@ -135,3 +141,12 @@ async def agent(session):
     await session.commit()
     await session.refresh(agent)
     return agent
+
+
+@pytest_asyncio.fixture
+async def conversation(session, user):
+    conversation = Conversation(user_id=user.id, title='Test conversation')
+    session.add(conversation)
+    await session.commit()
+    await session.refresh(conversation)
+    return conversation

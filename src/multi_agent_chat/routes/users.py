@@ -34,7 +34,7 @@ async def register_user(user_in: UserCreate, service: Service):
     return await service.create_user(user_in)
 
 
-# anyone
+# authenticated users
 @router.get(
     '/me',
     status_code=HTTPStatus.OK,
@@ -44,7 +44,7 @@ async def get_my_profile(current_user: CurrentUser):
     return current_user
 
 
-# anyone
+# authenticated users
 @router.patch(
     '/me',
     status_code=HTTPStatus.OK,
@@ -58,7 +58,7 @@ async def update_my_profile(
     return await service.update_user(current_user.id, user_in)
 
 
-# anyone
+# authenticated users
 @router.put(
     '/me',
     status_code=HTTPStatus.OK,
@@ -72,7 +72,7 @@ async def replace_my_profile(
     return await service.replace_user(current_user.id, user_in)
 
 
-# anyone
+# authenticated users
 @router.delete('/me', status_code=HTTPStatus.NO_CONTENT)
 async def delete_my_account(
     service: Service,
