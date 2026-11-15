@@ -12,6 +12,7 @@ from multi_agent_chat.app import app
 from multi_agent_chat.core.database import get_session
 from multi_agent_chat.core.security import get_password_hash
 from multi_agent_chat.core.settings import Settings
+from multi_agent_chat.models.agent import Agent
 from multi_agent_chat.models.user import User, UserRole, table_registry
 
 
@@ -120,3 +121,18 @@ def _mock_db_time(*, model, time=datetime.now()):
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
+
+
+@pytest_asyncio.fixture
+async def agent(session):
+    agent = Agent(
+        name='test',
+        description='Test agent',
+        model='test-model',
+        system_prompt='Be helpful.',
+        temperature=0.7,
+    )
+    session.add(agent)
+    await session.commit()
+    await session.refresh(agent)
+    return agent

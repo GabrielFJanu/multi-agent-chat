@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
+from multi_agent_chat.models.agent import Agent  # noqa: F401
 from multi_agent_chat.models.user import table_registry
 from multi_agent_chat.core.settings import Settings
 
