@@ -12,8 +12,7 @@ from multi_agent_chat.app import app
 from multi_agent_chat.core.database import get_session
 from multi_agent_chat.core.security import get_password_hash
 from multi_agent_chat.core.settings import Settings
-from multi_agent_chat.models.agent import Agent
-from multi_agent_chat.models.user import User, UserRole, table_registry
+from multi_agent_chat.models import Agent, User, UserRole, table_registry
 
 
 @pytest.fixture

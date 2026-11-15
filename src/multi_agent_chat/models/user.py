@@ -2,9 +2,9 @@ import enum
 from datetime import datetime
 
 from sqlalchemy import func
-from sqlalchemy.orm import Mapped, mapped_as_dataclass, mapped_column, registry
+from sqlalchemy.orm import Mapped, mapped_as_dataclass, mapped_column
 
-table_registry = registry()
+from multi_agent_chat.models.base import table_registry
 
 
 class UserRole(str, enum.Enum):

@@ -6,9 +6,8 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from multi_agent_chat.models.agent import Agent  # noqa: F401
-from multi_agent_chat.models.user import table_registry
 from multi_agent_chat.core.settings import Settings
+from multi_agent_chat.models import table_registry
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
