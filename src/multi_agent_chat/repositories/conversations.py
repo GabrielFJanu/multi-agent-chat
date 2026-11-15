@@ -2,9 +2,11 @@ from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from multi_agent_chat.core.database import get_session
+from multi_agent_chat.models.agent import Agent
 from multi_agent_chat.models.conversation import Conversation
 
 Session = Annotated[AsyncSession, Depends(get_session)]
@@ -71,3 +73,53 @@ class ConversationRepository:
     async def delete(self, db_obj: Conversation) -> None:
         await self.session.delete(db_obj)
         await self.session.commit()
+
+    async def add_agent(
+        self, conversation: Conversation, agent: Agent
+    ) -> None:
+        await self.session.refresh(conversation, ['agents'])
+        if agent in conversation.agents:
+            return
+        conversation_id, agent_id = conversation.id, agent.id
+        conversation.agents.append(agent)
+        try:
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            existing = await self.session.scalar(
+                select(Agent)
+                .join(Agent.conversations)
+                .where(
+                    Conversation.id == conversation_id, Agent.id == agent_id
+                )
+            )
+            if existing is None:
+                raise
+            await self.session.refresh(agent)
+
+    async def list_agents(
+        self, conversation_id: int, skip: int = 0, limit: int = 100
+    ) -> list[Agent]:
+        result = await self.session.scalars(
+            select(Agent)
+            .join(Agent.conversations)
+            .where(Conversation.id == conversation_id)
+            .order_by(Agent.id)
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.all())
+
+    async def remove_agent(
+        self, conversation: Conversation, agent_id: int
+    ) -> bool:
+        await self.session.refresh(conversation, ['agents'])
+        agent = next(
+            (agent for agent in conversation.agents if agent.id == agent_id),
+            None,
+        )
+        if agent is None:
+            return False
+        conversation.agents.remove(agent)
+        await self.session.commit()
+        return True

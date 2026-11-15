@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 
 from multi_agent_chat.core.security import get_current_user
 from multi_agent_chat.models.user import User
+from multi_agent_chat.schemas.agents import AgentResponse
 from multi_agent_chat.schemas.common import PaginationParams
 from multi_agent_chat.schemas.conversations import (
     ConversationCreate,
@@ -113,3 +114,50 @@ async def delete_conversation(
     current_user: CurrentUser,
 ):
     await service.delete_conversation(conversation_id, current_user.id)
+
+
+# authenticated owner
+@router.get(
+    '/{conversation_id}/agents',
+    response_model=list[AgentResponse],
+)
+async def list_conversation_agents(
+    conversation_id: int,
+    pagination: Pagination,
+    service: Service,
+    current_user: CurrentUser,
+):
+    return await service.list_agents(
+        conversation_id,
+        current_user.id,
+        skip=pagination.offset,
+        limit=pagination.limit,
+    )
+
+
+# authenticated owner
+@router.put(
+    '/{conversation_id}/agents/{agent_id}',
+    response_model=AgentResponse,
+)
+async def add_conversation_agent(
+    conversation_id: int,
+    agent_id: int,
+    service: Service,
+    current_user: CurrentUser,
+):
+    return await service.add_agent(conversation_id, agent_id, current_user.id)
+
+
+# authenticated owner
+@router.delete(
+    '/{conversation_id}/agents/{agent_id}',
+    status_code=HTTPStatus.NO_CONTENT,
+)
+async def remove_conversation_agent(
+    conversation_id: int,
+    agent_id: int,
+    service: Service,
+    current_user: CurrentUser,
+):
+    await service.remove_agent(conversation_id, agent_id, current_user.id)

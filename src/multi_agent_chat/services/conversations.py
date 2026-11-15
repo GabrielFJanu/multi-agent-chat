@@ -3,7 +3,9 @@ from typing import Annotated
 
 from fastapi import Depends, HTTPException
 
+from multi_agent_chat.models.agent import Agent
 from multi_agent_chat.models.conversation import Conversation
+from multi_agent_chat.repositories.agents import AgentRepository
 from multi_agent_chat.repositories.conversations import (
     ConversationRepository,
 )
@@ -14,14 +16,17 @@ from multi_agent_chat.schemas.conversations import (
 )
 
 Repository = Annotated[ConversationRepository, Depends()]
+Agents = Annotated[AgentRepository, Depends()]
 
 
 class ConversationService:
     def __init__(
         self,
         repository: Repository,
+        agents: Agents,
     ):
         self.repository = repository
+        self.agents = agents
 
     async def _get_conversation_by_id_or_404(
         self, conversation_id: int, user_id: int
@@ -107,3 +112,39 @@ class ConversationService:
             conversation_id, user_id
         )
         await self.repository.delete(db_conversation)
+
+    async def add_agent(
+        self, conversation_id: int, agent_id: int, user_id: int
+    ) -> Agent:
+        conversation = await self._get_conversation_by_id_or_404(
+            conversation_id, user_id
+        )
+        agent = await self.agents.get_by_id(agent_id)
+        if agent is None:
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND, detail='Agent not found'
+            )
+        await self.repository.add_agent(conversation, agent)
+        return agent
+
+    async def list_agents(
+        self,
+        conversation_id: int,
+        user_id: int,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> list[Agent]:
+        await self._get_conversation_by_id_or_404(conversation_id, user_id)
+        return await self.repository.list_agents(conversation_id, skip, limit)
+
+    async def remove_agent(
+        self, conversation_id: int, agent_id: int, user_id: int
+    ) -> None:
+        conversation = await self._get_conversation_by_id_or_404(
+            conversation_id, user_id
+        )
+        if not await self.repository.remove_agent(conversation, agent_id):
+            raise HTTPException(
+                status_code=HTTPStatus.NOT_FOUND,
+                detail='Agent not found in conversation',
+            )
