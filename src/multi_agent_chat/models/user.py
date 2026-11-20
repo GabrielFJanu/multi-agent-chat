@@ -1,10 +1,20 @@
 import enum
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import func
-from sqlalchemy.orm import Mapped, mapped_as_dataclass, mapped_column
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_as_dataclass,
+    mapped_column,
+    relationship,
+)
 
 from multi_agent_chat.models.base import table_registry
+
+if TYPE_CHECKING:
+    from multi_agent_chat.models.conversation import Conversation
+    from multi_agent_chat.models.message import Message
 
 
 class UserRole(str, enum.Enum):
@@ -28,4 +38,22 @@ class User:
         init=False,
         server_default=func.now(),
         onupdate=func.now(),
+    )
+
+    conversations: Mapped[list['Conversation']] = relationship(
+        back_populates='user',
+        cascade='all, delete',
+        lazy='raise',
+        init=False,
+        repr=False,
+        compare=False,
+    )
+
+    messages: Mapped[list['Message']] = relationship(
+        back_populates='user',
+        cascade='all, delete',
+        lazy='raise',
+        init=False,
+        repr=False,
+        compare=False,
     )

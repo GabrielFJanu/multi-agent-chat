@@ -129,3 +129,13 @@ class ConversationRepository:
                 return True
 
         return False
+
+    async def agent_is_member(
+        self, conversation_id: int, agent_id: int
+    ) -> bool:
+        agent = await self.session.scalar(
+            select(Agent)
+            .join(Agent.conversations)
+            .where(Conversation.id == conversation_id, Agent.id == agent_id)
+        )
+        return agent is not None

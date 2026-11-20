@@ -14,6 +14,7 @@ from multi_agent_chat.models.conversation_agent import conversation_agents
 
 if TYPE_CHECKING:
     from multi_agent_chat.models.conversation import Conversation
+    from multi_agent_chat.models.message import Message
 
 
 @mapped_as_dataclass(table_registry)
@@ -38,6 +39,14 @@ class Agent:
     conversations: Mapped[list['Conversation']] = relationship(
         secondary=conversation_agents,
         back_populates='agents',
+        lazy='raise',
+        init=False,
+        repr=False,
+        compare=False,
+    )
+
+    messages: Mapped[list['Message']] = relationship(
+        back_populates='agent',
         lazy='raise',
         init=False,
         repr=False,
