@@ -34,14 +34,16 @@ class UserRepository:
         return db_user
 
     async def find_by_username(self, username: str) -> User | None:
-        return await self.session.scalar(
+        db_user = await self.session.scalar(
             select(User).where(User.username == username)
         )
+        return db_user
 
     async def find_by_email(self, email: str) -> User | None:
-        return await self.session.scalar(
+        db_user = await self.session.scalar(
             select(User).where(User.email == email)
         )
+        return db_user
 
     async def update(self, db_obj: User, update_data: dict) -> User:
         for field, value in update_data.items():

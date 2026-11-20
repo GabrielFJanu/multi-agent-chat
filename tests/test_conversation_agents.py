@@ -66,10 +66,12 @@ def test_add_conversation_agent_is_idempotent(
     )
 
     assert response.status_code == HTTPStatus.OK
+
     response = client.get(
         f'/conversations/{conversation_with_agent.id}/agents',
         headers={'Authorization': f'Bearer {token}'},
     )
+
     assert response.status_code == HTTPStatus.OK
     assert [item['id'] for item in response.json()] == [agent.id]
 
@@ -78,22 +80,27 @@ def test_conversation_supports_multiple_agents(
     client, conversation_with_agent, agent, second_agent, token
 ):
     path = f'/conversations/{conversation_with_agent.id}/agents'
+
     response = client.put(
         f'{path}/{second_agent.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
     assert response.status_code == HTTPStatus.OK
+
     response = client.get(path, headers={'Authorization': f'Bearer {token}'})
+
     assert response.status_code == HTTPStatus.OK
     assert [item['id'] for item in response.json()] == [
         agent.id,
         second_agent.id,
     ]
+
     response = client.get(
         f'{path}?offset=1&limit=1',
         headers={'Authorization': f'Bearer {token}'},
     )
+
     assert response.status_code == HTTPStatus.OK
     assert [item['id'] for item in response.json()] == [second_agent.id]
 
@@ -103,20 +110,29 @@ def test_remove_conversation_agent(
 ):
     path = f'/conversations/{conversation_with_agent.id}/agents'
     headers = {'Authorization': f'Bearer {token}'}
+
     response = client.delete(f'{path}/{agent.id}', headers=headers)
 
     assert response.status_code == HTTPStatus.NO_CONTENT
     assert response.content == b''
+
     response = client.get(path, headers=headers)
+
     assert response.status_code == HTTPStatus.OK
     assert response.json() == []
+
     response = client.get(f'/agents/{agent.id}', headers=headers)
+
     assert response.status_code == HTTPStatus.OK
+
     response = client.get(
         f'/conversations/{conversation_with_agent.id}', headers=headers
     )
+
     assert response.status_code == HTTPStatus.OK
+
     response = client.delete(f'{path}/{agent.id}', headers=headers)
+
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Agent not found in conversation'}
 
@@ -129,16 +145,19 @@ def test_remove_agent_preserves_other_conversation(
     token,
 ):
     headers = {'Authorization': f'Bearer {token}'}
+
     response = client.delete(
         f'/conversations/{conversation_with_agent.id}/agents/{agent.id}',
         headers=headers,
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
+
     response = client.get(
         f'/conversations/{second_conversation_with_agent.id}/agents',
         headers=headers,
     )
+
     assert response.status_code == HTTPStatus.OK
     assert [item['id'] for item in response.json()] == [agent.id]
 
@@ -156,6 +175,7 @@ def test_other_users_cannot_manage_conversation_agents(
         request.getfixturevalue('second_agent') if method == 'put' else agent
     )
     target = path if method == 'get' else f'{path}/{target_agent.id}'
+
     response = client.request(
         method,
         target,
@@ -164,7 +184,9 @@ def test_other_users_cannot_manage_conversation_agents(
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Conversation not found'}
+
     response = client.get(path, headers={'Authorization': f'Bearer {token}'})
+
     assert response.status_code == HTTPStatus.OK
     assert [item['id'] for item in response.json()] == [agent.id]
 
@@ -226,12 +248,15 @@ def test_delete_conversation_preserves_agent(
     client, conversation_with_agent, agent, token
 ):
     headers = {'Authorization': f'Bearer {token}'}
+
     response = client.delete(
         f'/conversations/{conversation_with_agent.id}', headers=headers
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
+
     response = client.get(f'/agents/{agent.id}', headers=headers)
+
     assert response.status_code == HTTPStatus.OK
 
 
@@ -244,9 +269,11 @@ def test_delete_agent_removes_conversation_membership(
     )
 
     assert response.status_code == HTTPStatus.NO_CONTENT
+
     response = client.get(
         f'/conversations/{conversation_with_agent.id}/agents',
         headers={'Authorization': f'Bearer {token}'},
     )
+
     assert response.status_code == HTTPStatus.OK
     assert response.json() == []

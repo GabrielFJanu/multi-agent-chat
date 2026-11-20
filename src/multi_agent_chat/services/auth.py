@@ -36,7 +36,6 @@ class AuthService:
 
     @staticmethod
     async def refresh_token(user: User) -> dict:
-
         payload = {'sub': user.username}
         new_access_token = create_access_token(payload)
 

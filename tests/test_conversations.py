@@ -77,10 +77,12 @@ def test_delete_conversation(client, conversation, token):
 
     assert response.status_code == HTTPStatus.NO_CONTENT
     assert response.content == b''
+
     response = client.get(
         f'/conversations/{conversation.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
+
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
@@ -118,6 +120,7 @@ def test_other_users_cannot_access_conversation(
     client, conversation, request, access_token, method
 ):
     other_token = request.getfixturevalue(access_token)
+
     response = client.request(
         method,
         f'/conversations/{conversation.id}',
@@ -127,13 +130,16 @@ def test_other_users_cannot_access_conversation(
 
     assert response.status_code == HTTPStatus.NOT_FOUND
     assert response.json() == {'detail': 'Conversation not found'}
+
     token = request.getfixturevalue('token')
-    unchanged = client.get(
+
+    response = client.get(
         f'/conversations/{conversation.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
-    assert unchanged.status_code == HTTPStatus.OK
-    assert unchanged.json()['title'] == conversation.title
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()['title'] == conversation.title
 
 
 @pytest.mark.parametrize('access_token', ['other_token', 'admin_token'])
@@ -141,6 +147,7 @@ def test_list_excludes_other_users_conversations(
     client, conversation, request, access_token
 ):
     other_token = request.getfixturevalue(access_token)
+
     response = client.get(
         '/conversations/',
         headers={'Authorization': f'Bearer {other_token}'},

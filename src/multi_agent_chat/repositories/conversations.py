@@ -75,28 +75,33 @@ class ConversationRepository:
         await self.session.commit()
 
     async def add_agent(
-        self, conversation: Conversation, agent: Agent
+        self, db_conversation: Conversation, db_agent: Agent
     ) -> None:
-        await self.session.refresh(conversation, ['agents'])
-        if agent in conversation.agents:
+        await self.session.refresh(db_conversation, ['agents'])
+
+        if db_agent in db_conversation.agents:
             return
-        conversation_id, agent_id = conversation.id, agent.id
-        conversation.agents.append(agent)
+
+        conversation_id = db_conversation.id
+        agent_id = db_agent.id
+        db_conversation.agents.append(db_agent)
+
         try:
             await self.session.commit()
         except IntegrityError:
             # A concurrent PUT may have created the same membership.
             await self.session.rollback()
-            existing = await self.session.scalar(
+            existing_agent = await self.session.scalar(
                 select(Agent)
                 .join(Agent.conversations)
                 .where(
                     Conversation.id == conversation_id, Agent.id == agent_id
                 )
             )
-            if existing is None:
+            if existing_agent is None:
                 raise
-            await self.session.refresh(agent)
+
+            await self.session.refresh(db_agent)
 
     async def list_agents(
         self, conversation_id: int, skip: int = 0, limit: int = 100
@@ -109,18 +114,18 @@ class ConversationRepository:
             .offset(skip)
             .limit(limit)
         )
-        return list(result.all())
+        db_agents = result.all()
+        return db_agents
 
     async def remove_agent(
-        self, conversation: Conversation, agent_id: int
+        self, db_conversation: Conversation, agent_id: int
     ) -> bool:
-        await self.session.refresh(conversation, ['agents'])
-        agent = next(
-            (agent for agent in conversation.agents if agent.id == agent_id),
-            None,
-        )
-        if agent is None:
-            return False
-        conversation.agents.remove(agent)
-        await self.session.commit()
-        return True
+        await self.session.refresh(db_conversation, ['agents'])
+
+        for db_agent in db_conversation.agents:
+            if db_agent.id == agent_id:
+                db_conversation.agents.remove(db_agent)
+                await self.session.commit()
+                return True
+
+        return False

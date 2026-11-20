@@ -88,16 +88,19 @@ def token(client, user):
 @pytest_asyncio.fixture
 async def admin(session):
     plain_password = 'admin123'
+    hashed_password = get_password_hash(plain_password)
     admin = User(
         username='admin',
         email='admin@example.com',
-        password=get_password_hash(plain_password),
+        password=hashed_password,
         role=UserRole.ADMIN,
     )
     session.add(admin)
     await session.commit()
     await session.refresh(admin)
+
     admin.plain_password = plain_password
+
     return admin
 
 
@@ -112,7 +115,6 @@ def admin_token(client, admin):
 
 @contextmanager
 def _mock_db_time(*, model, time=datetime.now()):
-
     def fake_time_hook(mapper, connection, target):
         if hasattr(target, 'created_at'):
             target.created_at = time

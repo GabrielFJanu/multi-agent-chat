@@ -32,8 +32,7 @@ class ConversationService:
         self, conversation_id: int, user_id: int
     ) -> Conversation:
         db_conversation = await self.repository.get_by_id(
-            conversation_id,
-            user_id,
+            conversation_id, user_id
         )
 
         if not db_conversation:
@@ -116,16 +115,19 @@ class ConversationService:
     async def add_agent(
         self, conversation_id: int, agent_id: int, user_id: int
     ) -> Agent:
-        conversation = await self._get_conversation_by_id_or_404(
+        db_conversation = await self._get_conversation_by_id_or_404(
             conversation_id, user_id
         )
-        agent = await self.agent_repository.get_by_id(agent_id)
-        if agent is None:
+        db_agent = await self.agent_repository.get_by_id(agent_id)
+
+        if not db_agent:
             raise HTTPException(
-                status_code=HTTPStatus.NOT_FOUND, detail='Agent not found'
+                status_code=HTTPStatus.NOT_FOUND,
+                detail='Agent not found',
             )
-        await self.repository.add_agent(conversation, agent)
-        return agent
+
+        await self.repository.add_agent(db_conversation, db_agent)
+        return db_agent
 
     async def list_agents(
         self,
@@ -135,17 +137,21 @@ class ConversationService:
         limit: int = 100,
     ) -> list[Agent]:
         await self._get_conversation_by_id_or_404(conversation_id, user_id)
-        return await self.repository.list_agents(
+
+        db_agents = await self.repository.list_agents(
             conversation_id, skip=skip, limit=limit
         )
+        return db_agents
 
     async def remove_agent(
         self, conversation_id: int, agent_id: int, user_id: int
     ) -> None:
-        conversation = await self._get_conversation_by_id_or_404(
+        db_conversation = await self._get_conversation_by_id_or_404(
             conversation_id, user_id
         )
-        if not await self.repository.remove_agent(conversation, agent_id):
+        removed = await self.repository.remove_agent(db_conversation, agent_id)
+
+        if not removed:
             raise HTTPException(
                 status_code=HTTPStatus.NOT_FOUND,
                 detail='Agent not found in conversation',

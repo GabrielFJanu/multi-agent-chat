@@ -73,7 +73,10 @@ async def replace_my_profile(
 
 
 # authenticated users
-@router.delete('/me', status_code=HTTPStatus.NO_CONTENT)
+@router.delete(
+    '/me',
+    status_code=HTTPStatus.NO_CONTENT,
+)
 async def delete_my_account(
     service: Service,
     current_user: CurrentUser,
