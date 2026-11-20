@@ -2,6 +2,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from multi_agent_chat.schemas.common import PartialUpdate
+
 
 class AgentCreate(BaseModel):
     name: str
@@ -22,7 +24,7 @@ class AgentResponse(BaseModel):
     updated_at: datetime
 
 
-class AgentUpdate(BaseModel):
+class AgentUpdate(PartialUpdate):
     name: str | None = None
     description: str | None = None
     model: str | None = None

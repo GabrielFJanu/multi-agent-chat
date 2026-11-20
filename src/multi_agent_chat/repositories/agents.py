@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from multi_agent_chat.core.database import get_session
@@ -52,5 +53,9 @@ class AgentRepository:
         return db_obj
 
     async def delete(self, db_obj: Agent) -> None:
-        await self.session.delete(db_obj)
-        await self.session.commit()
+        try:
+            await self.session.delete(db_obj)
+            await self.session.commit()
+        except IntegrityError:
+            await self.session.rollback()
+            raise

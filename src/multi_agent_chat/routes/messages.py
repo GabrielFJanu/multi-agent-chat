@@ -22,7 +22,7 @@ Service = Annotated[MessageService, Depends()]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-# authenticated users
+# authenticated owner
 @router.post(
     '/',
     status_code=HTTPStatus.CREATED,
@@ -45,7 +45,7 @@ async def create_message(
     status_code=HTTPStatus.OK,
     response_model=list[MessageResponse],
 )
-async def list_my_messages(
+async def list_conversation_messages(
     conversation_id: int,
     pagination: Pagination,
     service: Service,

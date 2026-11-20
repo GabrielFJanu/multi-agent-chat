@@ -91,14 +91,7 @@ class ConversationRepository:
         except IntegrityError:
             # A concurrent PUT may have created the same membership.
             await self.session.rollback()
-            existing_agent = await self.session.scalar(
-                select(Agent)
-                .join(Agent.conversations)
-                .where(
-                    Conversation.id == conversation_id, Agent.id == agent_id
-                )
-            )
-            if existing_agent is None:
+            if not await self.agent_is_member(conversation_id, agent_id):
                 raise
 
             await self.session.refresh(db_agent)

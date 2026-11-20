@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, EmailStr
 
 from multi_agent_chat.models.user import UserRole
+from multi_agent_chat.schemas.common import PartialUpdate
 
 
 class UserCreate(BaseModel):
@@ -20,7 +21,7 @@ class UserResponse(BaseModel):
     updated_at: datetime
 
 
-class UserUpdate(BaseModel):
+class UserUpdate(PartialUpdate):
     username: str | None = None
     email: EmailStr | None = None
     password: str | None = None

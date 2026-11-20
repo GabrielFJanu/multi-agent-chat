@@ -200,3 +200,12 @@ def test_full_payload_required(client, token, method, path):
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_patch_conversation_rejects_null(client, conversation, token):
+    response = client.patch(
+        f'/conversations/{conversation.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={'title': None},
+    )
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY

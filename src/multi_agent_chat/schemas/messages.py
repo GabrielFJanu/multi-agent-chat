@@ -1,6 +1,8 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
+
+from multi_agent_chat.schemas.common import PartialUpdate
 
 
 class MessageCreate(BaseModel):
@@ -17,16 +19,9 @@ class MessageResponse(BaseModel):
     updated_at: datetime
 
 
-class MessageUpdate(BaseModel):
+class MessageUpdate(PartialUpdate):
     content: str | None = Field(default=None, min_length=1)
 
-    @field_validator('content')
-    @classmethod
-    def content_cannot_be_null(cls, value: str | None) -> str:
-        if value is None:
-            raise ValueError('Content cannot be null')
-        return value
 
-
-class MessageReplace(BaseModel):
-    content: str = Field(min_length=1)
+class MessageReplace(MessageCreate):
+    pass

@@ -211,3 +211,21 @@ def test_my_profile_requires_authentication(client, method):
     response = client.request(method, '/users/me')
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
+
+
+@pytest.mark.parametrize('field', ['username', 'email', 'password'])
+def test_patch_user_rejects_null(client, token, field):
+    response = client.patch(
+        '/users/me',
+        headers={'Authorization': f'Bearer {token}'},
+        json={field: None},
+    )
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_patch_user_preserves_omitted_fields(client, token):
+    headers = {'Authorization': f'Bearer {token}'}
+    before = client.get('/users/me', headers=headers).json()
+    response = client.patch('/users/me', headers=headers, json={})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == before

@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 
 from multi_agent_chat.models.agent import Agent
 from multi_agent_chat.repositories.agents import AgentRepository
@@ -74,4 +75,10 @@ class AgentService:
 
     async def delete_agent(self, agent_id: int) -> None:
         db_agent = await self._get_agent_by_id_or_404(agent_id)
-        await self.repository.delete(db_agent)
+        try:
+            await self.repository.delete(db_agent)
+        except IntegrityError as exc:
+            raise HTTPException(
+                status_code=HTTPStatus.CONFLICT,
+                detail='Cannot delete an agent with messages',
+            ) from exc

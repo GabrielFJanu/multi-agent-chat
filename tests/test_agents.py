@@ -3,6 +3,7 @@ from http import HTTPStatus
 import pytest
 
 from multi_agent_chat.models.agent import Agent
+from multi_agent_chat.models.message import Message
 
 
 def test_create_agent(client, admin_token, mock_db_time):
@@ -216,3 +217,54 @@ def test_full_payload_required(client, admin_token, method, path):
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+@pytest.mark.parametrize(
+    'field', ['name', 'description', 'model', 'system_prompt', 'temperature']
+)
+def test_patch_agent_rejects_null(client, agent, admin_token, field):
+    response = client.patch(
+        f'/agents/{agent.id}',
+        headers={'Authorization': f'Bearer {admin_token}'},
+        json={field: None},
+    )
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+
+
+def test_patch_agent_preserves_omitted_fields(client, agent, admin_token):
+    headers = {'Authorization': f'Bearer {admin_token}'}
+    url = f'/agents/{agent.id}'
+    before = client.get(url, headers=headers).json()
+    response = client.patch(url, headers=headers, json={})
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == before
+
+
+@pytest.mark.asyncio
+async def test_delete_agent_with_messages_returns_conflict(
+    client, session, conversation_with_agent, admin_token
+):
+    agent = conversation_with_agent.agents[0]
+    agent_id = agent.id
+    conversation_id = conversation_with_agent.id
+    message = Message(
+        conversation_id=conversation_id, agent_id=agent_id, content='Keep'
+    )
+    session.add(message)
+    await session.commit()
+    message_id = message.id
+    headers = {'Authorization': f'Bearer {admin_token}'}
+    response = client.delete(f'/agents/{agent_id}', headers=headers)
+    assert response.status_code == HTTPStatus.CONFLICT
+    assert response.json() == {
+        'detail': 'Cannot delete an agent with messages'
+    }
+    assert (
+        client.get(f'/agents/{agent_id}', headers=headers).status_code
+        == HTTPStatus.OK
+    )
+    await session.refresh(message)
+    assert message.agent_id == agent_id
+    assert message.id == message_id
+    await session.refresh(conversation_with_agent, ['agents'])
+    assert [item.id for item in conversation_with_agent.agents] == [agent_id]
